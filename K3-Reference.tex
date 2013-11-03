@@ -1,0 +1,63 @@
+\documentclass{article}
+
+\usepackage{amsmath}
+\usepackage{mathpartir}
+
+\title{K3: Language Reference}
+\author{}
+\date{}
+
+\newcommand{\K}{\texttt{K3}}
+
+\newcommand{\toI}{\stackrel{I}{\implies}}
+
+\begin{document}
+    \maketitle
+
+    \tableofcontents
+
+    \section{Code Generation}
+    \subsection{Imperative Targets}
+
+    Code generation to imperative target languages is done in two stages. The first is a pure $\K
+    \rightarrow \K$ transformation which produces an imperative embedding, more amenable to
+    translation into an imperative language. The second stage consists of the actual translation to
+    the backing language.
+
+    \subsubsection{Grammar Constructs}
+
+    The rewrite rules for the first stage are as follows:
+
+    \subsubsection{Declaration Rules}
+
+    \begin{itemize}
+        \item Triggers rewrite to functions of the corresponding argument types.
+        \item Global variable declarations rewrite to declarations of the same type, with the caveat
+            that collection declarations are rewritten to be of a type specific to the combination
+            of annotations they are declared with.
+        \item Annotation declarations rewrite to global declaration of composites, which consist of
+            the relevant lifted attributes and methods.
+    \end{itemize}
+    \subsubsection{Expression Rules}
+
+    \begin{itemize}
+        \item Value constructors (constants of any type, \texttt{Some}/\texttt{None}, indirections,
+            literal tuples and records, \texttt{empty}) should be reified with a generated name.
+        \item Binary operators except function application can remain as-is.
+        \item Function declaration/application has two forms:
+            \begin{itemize}
+                \item If the function is anonymous (and is therefore immediately applied), it should
+                    be rewritten as a \texttt{let-in}.
+                \item If the function is declared globally (and is therefore potentially applied
+                    multiple times), it should be translated into a native function, with
+                    corresponding invocations translated as native function calls.
+            \end{itemize}
+    \end{itemize}
+
+    \begin{align*}
+        \inferrule[Function Application]
+            {e_1 \toI r_1}
+            {(\lambda \texttt{x}.e_1) e_2 \toI \texttt{let $x = \texttt{immut $r_2$}$ in $r_1$}} \\
+    \end{align*}
+
+\end{document}
