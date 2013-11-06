@@ -1,7 +1,8 @@
 \documentclass{article}
 
 \usepackage{amsmath}
-\usepackage{mathpartir}
+\usepackage{stmaryrd}
+\usepackage{fullpage}
 
 \title{K3: Language Reference}
 \author{}
@@ -9,7 +10,7 @@
 
 \newcommand{\K}{\texttt{K3}}
 
-\newcommand{\toI}{\stackrel{I}{\implies}}
+\newcommand{\intI}[1]{\llbracket\texttt{#1}\rrbracket}
 
 \begin{document}
     \maketitle
@@ -38,6 +39,13 @@
         \item Annotation declarations rewrite to global declaration of composites, which consist of
             the relevant lifted attributes and methods.
     \end{itemize}
+
+    \begin{align}
+        \intI{declare x:$\tau$ = $e$} &= \\
+        \intI{trigger x:$\tau$ = $e$} &= \\
+        \intI{role x (ds)}
+    \end{align}
+
     \subsubsection{Expression Rules}
 
     \begin{itemize}
@@ -54,10 +62,33 @@
             \end{itemize}
     \end{itemize}
 
-    \begin{align*}
-        \inferrule[Function Application]
-            {e_1 \toI r_1}
-            {(\lambda \texttt{x}.e_1) e_2 \toI \texttt{let $x = \texttt{immut $r_2$}$ in $r_1$}} \\
-    \end{align*}
+    \begin{align}
+        \intI{$e_1 \oplus e_2$}
+            &= \intI{$e_1$} \oplus \intI{$e_2$} \;\; \text{where $\oplus \neq \epsilon$ or $e_1$ is a variable.} \\
+        \intI{($\lambda$x -> $e_1$) $e_2$}
+            &= \texttt{let immut x = $\intI{$e_2$}$ in $\intI{$e_1$}$} \\
+        \intI{Some $e$}
+            &= \texttt{Some $\intI{$e$}$} \\
+        \intI{ind $e$}
+            &= \texttt{ind $\intI{$e$}$} \\
+        \intI{($e_1$, $e_2$, \ldots, $e_n$)}
+            &= \texttt{($\intI{$e_1$}$, $\intI{$e_2$}$, \ldots, $\intI{$e_n$}$)} \\
+        \intI{($x_1: e_1$, $x_2: e_2$, \ldots, $x_n: e_n$)}
+            &= \texttt{($x_1: \intI{$e_1$}$, $x_2: \intI{$e_2$}$, \ldots, $x_n: \intI{$e_n$}$)} \\
+        \intI{if $e_1$ then $e_2$ else $e_3$}
+            &= \texttt{if $\intI{$e_1$}$ then $\intI{$e_2$}$ else $\intI{$e_3$}$} \\
+        \intI{$e$.x}
+            &= \texttt{$\intI{$e$}$.x} \\
+        \intI{let $m$ x = $e_1$ in $e_2$}
+            &= \texttt{let $m$ x = $\intI{$e_1$}$ in $\intI{$e_2$}$} \\
+        \intI{x = $e$}
+            &= \texttt{x = $\intI{$e$}$} \\
+        \intI{case $e_1$ of (Some $x$ -> $e_2$) (None -> $e_3$)}
+            &= \texttt{case $\intI{$e_1$}$ of (Some $x$ -> $\intI{$e_2$}$) (None -> $\intI{$e_3$}$)} \\
+        \intI{bind $e_1$ as $b$ in $e_2$}
+            &= \texttt{bind $\intI{$e_1$}$ as $b$ in $\intI{$e_2$}$} \\
+        \intI{e}
+            &= e \;\; \text{otherwise.}
+    \end{align}
 
 \end{document}
