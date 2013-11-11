@@ -1,0 +1,83 @@
+\usepackage{ifthen}
+
+% Translation Contexts.
+\newcommand{\intI}[1]{\llbracket\,#1\,\rrbracket_I}
+\newcommand{\intC}[1]{\llbracket\,#1\,\rrbracket_C}
+
+% General-purpose token macro.
+\newcommand{\tk}[1]{\ensuremath{\mathinner{\texttt{#1}}}}
+
+% Grammar-Terminal definition macro.
+\newcommand{\defgt}[2][]{%
+    \ifthenelse{\equal{#1}{}}{\defgt[#2]{#2}}{%
+        \expandafter\newcommand\expandafter{\csname gt#2\endcsname}{\mathinner{\texttt{#1}}}%
+    }%
+}
+
+% Grammar Terminals
+
+
+% Punctuation
+\defgt[(]{LP}
+\defgt[)]{RP}
+\defgt[\texttt{\char`\{}]{LB}
+\defgt[\texttt{\char`\}}]{RB}
+\defgt[,]{Comma}
+\defgt[.]{Dot}
+\defgt[;]{Semi}
+\defgt[:]{Colon}
+\defgt[<]{LA}
+\defgt[>]{RA}
+\defgt[@]{At}
+
+% Operators
+\defgt[+]{Plus}
+\defgt[-]{Minus}
+\defgt[*]{Times}
+\defgt[/]{DividedBy}
+\defgt[==]{Eq}
+\defgt[<]{LT}
+\defgt[>]{GT}
+\defgt[<=]{LE}
+\defgt[>=]{GE}
+\defgt[++]{Concat}
+\defgt[=]{Assign}
+\defgt[=]{Is}
+\defgt[->]{Arrow}
+
+% Keywords
+\defgt[let]{Let}
+\defgt[in]{In}
+
+\defgt[Some]{Some}
+\defgt[None]{None}
+
+\defgt[if]{If}
+\defgt[then]{Then}
+\defgt[else]{Else}
+
+\defgt[ind]{Ind}
+
+\defgt[immut]{Immut}
+\defgt[mut]{Mut}
+
+\defgt[case]{Case}
+\defgt[of]{Of}
+
+\defgt[bind]{Bind}
+\defgt[as]{As}
+
+\defgt[trigger]{Trigger}
+\defgt[declare]{Declare}
+\defgt[annotation]{Annotation}
+\defgt[provides]{Provides}
+\defgt[requires]{Requires}
+\defgt[lifted]{Lifted}
+\defgt[given]{Given}
+\defgt[type]{Type}
+
+\defgt[collection]{Collection}
+\defgt[named]{Named}
+
+% Function definition macros
+\newcommand{\ConstructComposite}[1]{\textsc{Construct-Composite}(\ensuremath{\mathit{#1}})}

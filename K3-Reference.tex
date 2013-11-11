@@ -3,14 +3,13 @@
 \usepackage{amsmath}
 \usepackage{stmaryrd}
 \usepackage{fullpage}
+\usepackage{K3-Reference}
 
 \title{K3: Language Reference}
 \author{}
 \date{}
 
 \newcommand{\K}{\texttt{K3}}
-
-\newcommand{\intI}[1]{\llbracket\texttt{#1}\rrbracket}
 
 \begin{document}
     \maketitle
@@ -39,11 +38,16 @@
         \item Annotation declarations rewrite to global declaration of composites, which consist of
             the relevant lifted attributes and methods.
     \end{itemize}
-
+%
     \begin{align}
-        \intI{declare x:$\tau$ = $e$} &= \\
-        \intI{trigger x:$\tau$ = $e$} &= \\
-        \intI{role x (ds)}
+        \intI{\gtDeclare x \gtColon \tau \gtIs e}
+            &= \gtDeclare x \gtColon \tau \gtIs \intI{e}
+            \; \text{if $\tau$ is not a collection type.} \\
+        \intI{\gtDeclare x \gtColon \tau \gtIs e}
+            &= \gtDeclare x \gtColon \gtNamed \ConstructComposite{ids} \gtIs \intI{e}
+            \; \text{if $\tau \sim \gtCollection \gtAt \{ids\}$.} \\
+        \intI{\gtProvides \gtLifted x \gtColon \tau \gtIs e}
+            &= \gtDeclare x \gtColon \tau \gtIs e
     \end{align}
 
     \subsubsection{Expression Rules}
@@ -61,34 +65,39 @@
                     corresponding invocations translated as native function calls.
             \end{itemize}
     \end{itemize}
-
+%
     \begin{align}
-        \intI{$e_1 \oplus e_2$}
-            &= \intI{$e_1$} \oplus \intI{$e_2$} \;\; \text{where $\oplus \neq \epsilon$ or $e_1$ is a variable.} \\
-        \intI{($\lambda$x -> $e_1$) $e_2$}
-            &= \texttt{let immut x = $\intI{$e_2$}$ in $\intI{$e_1$}$} \\
-        \intI{Some $e$}
-            &= \texttt{Some $\intI{$e$}$} \\
-        \intI{ind $e$}
-            &= \texttt{ind $\intI{$e$}$} \\
-        \intI{($e_1$, $e_2$, \ldots, $e_n$)}
-            &= \texttt{($\intI{$e_1$}$, $\intI{$e_2$}$, \ldots, $\intI{$e_n$}$)} \\
-        \intI{($x_1: e_1$, $x_2: e_2$, \ldots, $x_n: e_n$)}
-            &= \texttt{($x_1: \intI{$e_1$}$, $x_2: \intI{$e_2$}$, \ldots, $x_n: \intI{$e_n$}$)} \\
-        \intI{if $e_1$ then $e_2$ else $e_3$}
-            &= \texttt{if $\intI{$e_1$}$ then $\intI{$e_2$}$ else $\intI{$e_3$}$} \\
-        \intI{$e$.x}
-            &= \texttt{$\intI{$e$}$.x} \\
-        \intI{let $m$ x = $e_1$ in $e_2$}
-            &= \texttt{let $m$ x = $\intI{$e_1$}$ in $\intI{$e_2$}$} \\
-        \intI{x = $e$}
-            &= \texttt{x = $\intI{$e$}$} \\
-        \intI{case $e_1$ of (Some $x$ -> $e_2$) (None -> $e_3$)}
-            &= \texttt{case $\intI{$e_1$}$ of (Some $x$ -> $\intI{$e_2$}$) (None -> $\intI{$e_3$}$)} \\
-        \intI{bind $e_1$ as $b$ in $e_2$}
-            &= \texttt{bind $\intI{$e_1$}$ as $b$ in $\intI{$e_2$}$} \\
+        \intI{e_1 \oplus e_2}
+            &= \intI{e_1} \oplus \intI{e_2} \;\; \text{where $\oplus \neq \epsilon$ or $e_1$ is a variable.} \\
+        \intI{\gtLP \lambda x \gtArrow e_1 \gtRP e_2}
+            &= \gtLet x \gtAssign \gtImmut \intI{e_2} \gtIn \intI{e_1} \\
+        \intI{\gtSome e}
+            &= \gtSome \intI{e} \\
+        \intI{\gtInd e}
+            &= \gtInd \intI{e} \\
+        \intI{\gtLP e_1, e_2, \ldots, e_n \gtRP}
+            &= \gtLP \intI{e_1}, \intI{e_2}, \ldots, \intI{e_n} \gtRP \\
+        \intI{\gtLP x_1 \gtColon e_1, x_2 \gtColon e_2, \ldots, x_n \gtColon e_n \gtRP}
+            &= \gtLP x_1 \gtColon \intI{e_1}, x_2 \gtColon \intI{e_2}, \ldots, x_n \gtColon \intI{e_n} \gtRP \\
+        \intI{\gtIf e_1 \gtThen e_2 \gtElse e_3}
+            &= \gtIf \intI{e_1} \gtThen \intI{e_2} \gtElse \intI{e_3} \\
+        \intI{e.x}
+            &= \intI{e}.x \\
+        \intI{\gtLet m \; x \gtAssign e_1 \gtIn e_2}
+            &= \gtLet m \; x \gtAssign \intI{e_1} \gtIn \intI{e_2} \\
+        \intI{x \gtAssign e}
+            &= x \gtAssign \intI{e} \\
+        \intI{\gtCase e_1 \gtOf \gtLB \gtSome x \gtArrow e_2 \gtRB \gtLB \gtNone \gtArrow e_3 \gtRB}
+            &= \gtCase \intI{e_1} \gtOf \gtLB \gtSome x \gtArrow \intI{e_2} \gtRB
+                \gtLB \gtNone \gtArrow \intI{e_3} \gtRB \\
+        \intI{\gtBind e_1 \gtAs b \gtIn e_2}
+            &= \gtBind \intI{e_1} \gtAs b \gtIn \intI{e_2} \\
         \intI{e}
             &= e \;\; \text{otherwise.}
     \end{align}
 
+    \subsection{\texttt{C++} Generation}
+
+    Following the imperative transformation, \texttt{C++} code generation takes place through
+    stringification. This is done as follows:
 \end{document}
