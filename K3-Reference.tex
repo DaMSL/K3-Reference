@@ -66,38 +66,66 @@
             \end{itemize}
     \end{itemize}
 %
-    \begin{align}
-        \intI{e_1 \oplus e_2}
-            &= \intI{e_1} \oplus \intI{e_2} \;\; \text{where $\oplus \neq \epsilon$ or $e_1$ is a variable.} \\
-        \intI{\gtLP \lambda x \gtArrow e_1 \gtRP e_2}
-            &= \gtLet x \gtAssign \gtImmut \intI{e_2} \gtIn \intI{e_1} \\
-        \intI{\gtSome e}
-            &= \gtSome \intI{e} \\
-        \intI{\gtInd e}
-            &= \gtInd \intI{e} \\
-        \intI{\gtLP e_1, e_2, \ldots, e_n \gtRP}
-            &= \gtLP \intI{e_1}, \intI{e_2}, \ldots, \intI{e_n} \gtRP \\
-        \intI{\gtLP x_1 \gtColon e_1, x_2 \gtColon e_2, \ldots, x_n \gtColon e_n \gtRP}
-            &= \gtLP x_1 \gtColon \intI{e_1}, x_2 \gtColon \intI{e_2}, \ldots, x_n \gtColon \intI{e_n} \gtRP \\
-        \intI{\gtIf e_1 \gtThen e_2 \gtElse e_3}
-            &= \gtIf \intI{e_1} \gtThen \intI{e_2} \gtElse \intI{e_3} \\
-        \intI{e.x}
-            &= \intI{e}.x \\
-        \intI{\gtLet m \; x \gtAssign e_1 \gtIn e_2}
-            &= \gtLet m \; x \gtAssign \intI{e_1} \gtIn \intI{e_2} \\
-        \intI{x \gtAssign e}
-            &= x \gtAssign \intI{e} \\
-        \intI{\gtCase e_1 \gtOf \gtLB \gtSome x \gtArrow e_2 \gtRB \gtLB \gtNone \gtArrow e_3 \gtRB}
-            &= \gtCase \intI{e_1} \gtOf \gtLB \gtSome x \gtArrow \intI{e_2} \gtRB
-                \gtLB \gtNone \gtArrow \intI{e_3} \gtRB \\
-        \intI{\gtBind e_1 \gtAs b \gtIn e_2}
-            &= \gtBind \intI{e_1} \gtAs b \gtIn \intI{e_2} \\
-        \intI{e}
-            &= e \;\; \text{otherwise.}
-    \end{align}
+    \begin{align*}
+        \eqI{e_1 \oplus e_2}{\intI{e_1} \oplus \intI{e_2}}{where $\oplus \neq \epsilon$ or $e_1$ is a variable.} \\
+        \eqI{\gtLP \lambda x \gtArrow e_1 \gtRP e_2}{\gtLet x \gtAssign \gtImmut \intI{e_2} \gtIn \intI{e_1}}{} \\
+        \eqI{\gtSome e}{\gtSome \intI{e}}{} \\
+        \eqI{\gtInd e}{\gtInd \intI{e}}{} \\
+        \eqI{\gtLP e_1, e_2, \ldots, e_n \gtRP}{\gtLP \intI{e_1}, \intI{e_2}, \ldots, \intI{e_n} \gtRP}{} \\
+        \eqI{\gtLP x_1 \gtColon e_1, x_2 \gtColon e_2, \ldots, x_n \gtColon e_n \gtRP}
+            {\gtLP x_1 \gtColon \intI{e_1}, x_2 \gtColon \intI{e_2}, \ldots, x_n \gtColon \intI{e_n} \gtRP}{} \\
+        \eqI{\gtIf e_1 \gtThen e_2 \gtElse e_3}{\gtIf \intI{e_1} \gtThen \intI{e_2} \gtElse \intI{e_3}}{} \\
+        \eqI{e.x}{\intI{e}.x}{} \\
+        \eqI{\gtLet x \gtAssign e_1 \gtIn e_2}{\gtLet x \gtAssign \intI{e_1} \gtIn \intI{e_2}}{} \\
+        \eqI{x \gtAssign e}{x \gtAssign \intI{e}}{} \\
+        \eqI{\gtCase e_1 \gtOf \gtLB \gtSome x \gtArrow e_2 \gtRB
+                \gtLB \gtNone \gtArrow e_3 \gtRB}
+            {\gtCase \intI{e_1} \gtOf \gtLB \gtSome x \gtArrow \intI{e_2} \gtRB
+                \gtLB \gtNone \gtArrow \intI{e_3} \gtRB}
+            {} \\
+        \eqI{\gtBind e_1 \gtAs b \gtIn e_2}{\gtBind \intI{e_1} \gtAs b \gtIn \intI{e_2}}{} \\
+        \eqI{e}{e}{otherwise.}
+    \end{align*}
 
     \subsection{\texttt{C++} Generation}
 
     Following the imperative transformation, \texttt{C++} code generation takes place through
     stringification. This is done as follows:
+%
+    \begin{align*}
+        \eqC{\gtLP e_1 \gtComma \ldots \gtComma e_n \gtRP}
+            {\ccall{make\_tuple}{}{\intC{e_1}, \ldots, \intC{e_n}}}
+            {} \\
+        \eqC{\gtLB x_1 \gtColon e_1 \gtComma \ldots \gtComma x_n \gtColon e_n \gtRB}
+            {\ConstructRecord{x_1, \ldots x_n} \gtLP \intI{e_1} \gtComma \ldots \gtComma \intI{e_n} \gtRP}{} \\
+        \eqC{e_1 \oplus e_2}{\intC{e_1} \oplus \intC{e_2}}{} \\
+        \eqC{e \gtDot x}{\intC{e} \gtDot x}{} \\
+        \eqC{\gtLet x \gtAssign e_1 \gtIn e_2}
+            {x \gtAssign \intC{e_1} \gtComma \intC{e_2}}
+            {when $x \in \Delta$} \\
+        \eqC{x \gtAssign e}{x \gtAssign \intC{e}}{} \\
+        \eqC{\gtCase e_1 \gtOf \gtLB \gtSome x \gtArrow e_2 \gtRB \gtLB \gtNone \gtArrow e_3 \gtRB}
+            {y \gtAssign \intC{e_1} \gtComma
+                \gtLP y \gtNeq \tk{null} \gtRP \gtQt
+                \gtLP x \gtAssign \gtStar y \gtComma \intC{e_2} \gtRP \gtColon
+                \intC{e_3}
+            }
+            {} \\
+        \eqC{\gtBind e_1 \gtAs \gtInd x \gtIn e_2}
+            {y \gtAssign \intC{e_1} \gtComma x \gtAssign \gtAmp y \gtComma \intC{e_2}}
+            {when $x, y \in \Delta$.} \\
+        \eqC{\gtBind e_1 \gtAs \gtLB x_1 \gtColon z_1 \gtComma \ldots \gtComma x_n \gtColon z_n \gtRB \gtIn e_2}
+            {y \gtAssign \intC{e_1} \gtComma
+                z_1 \gtAssign y \gtDot x_1 \gtComma \ldots \gtComma
+                z_n \gtAssign y \gtDot x_n \gtComma
+                \intC{e_2}}
+            {when $z_1, \ldots z_n \in \Delta$} \\
+        \eqC{\gtBind e_1 \gtAs \gtLP x_1, \ldots, x_n \gtRP \gtIn e_2}
+            {y \gtAssign \intC{e_1} \gtComma
+                x_1 \gtAssign \ccall{get}{0}{y} \gtComma \ldots \gtComma
+                x_n \gtAssign \ccall{get}{n - 1}{y} \gtComma
+                \intC{e_2}
+            }{when $x_1, \ldots, x_n \in \Delta$.} \\
+        \eqC{\gtIf e_1 \gtThen e_2 \gtElse e_3}{\intC{e_1} \gtQt \intC{e_2} \gtColon \intC{e_3}}{} \\
+    \end{align*}
 \end{document}

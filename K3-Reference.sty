@@ -4,6 +4,9 @@
 \newcommand{\intI}[1]{\llbracket\,#1\,\rrbracket_I}
 \newcommand{\intC}[1]{\llbracket\,#1\,\rrbracket_C}
 
+\newcommand{\eqI}[3]{\intI{#1} &\longrightarrow #2 \ifthenelse{\equal{#3}{}}{}{\\\notag& \text{#3}}}
+\newcommand{\eqC}[3]{\intC{#1} &\longrightarrow #2 \ifthenelse{\equal{#3}{}}{}{\\\notag& \text{#3}}}
+
 % General-purpose token macro.
 \newcommand{\tk}[1]{\ensuremath{\mathinner{\texttt{#1}}}}
 
@@ -29,6 +32,9 @@
 \defgt[<]{LA}
 \defgt[>]{RA}
 \defgt[@]{At}
+\defgt[?]{Qt}
+\defgt[*]{Star}
+\defgt[\&]{Amp}
 
 % Operators
 \defgt[+]{Plus}
@@ -36,6 +42,7 @@
 \defgt[*]{Times}
 \defgt[/]{DividedBy}
 \defgt[==]{Eq}
+\defgt[!=]{Neq}
 \defgt[<]{LT}
 \defgt[>]{GT}
 \defgt[<=]{LE}
@@ -79,5 +86,14 @@
 \defgt[collection]{Collection}
 \defgt[named]{Named}
 
+% Types
+\defgt[int]{Int}
+\defgt[double]{Double}
+
+\newcommand{\ccall}[3]{%
+    \ensuremath{\texttt{#1}\ifthenelse{\equal{#2}{}}{}{\texttt{<}#2\texttt{>}}\texttt{(}#3\texttt{)}}
+}
+
 % Function definition macros
 \newcommand{\ConstructComposite}[1]{\textsc{Construct-Composite}(\ensuremath{\mathit{#1}})}
+\newcommand{\ConstructRecord}[1]{\textsc{Construct-Record}(\ensuremath{\mathit{#1}})}
