@@ -1,6 +1,7 @@
 \documentclass{article}
 
 \usepackage{amsmath}
+\usepackage{amsfonts}
 \usepackage{stmaryrd}
 \usepackage{fullpage}
 \usepackage{K3-Reference}
@@ -39,16 +40,31 @@
             the relevant lifted attributes and methods.
     \end{itemize}
 %
-    \begin{align}
-        \intI{\gtDeclare x \gtColon \tau \gtIs e}
-            &= \gtDeclare x \gtColon \tau \gtIs \intI{e}
-            \; \text{if $\tau$ is not a collection type.} \\
-        \intI{\gtDeclare x \gtColon \tau \gtIs e}
-            &= \gtDeclare x \gtColon \gtNamed \ConstructComposite{ids} \gtIs \intI{e}
-            \; \text{if $\tau \sim \gtCollection \gtAt \{ids\}$.} \\
-        \intI{\gtProvides \gtLifted x \gtColon \tau \gtIs e}
-            &= \gtDeclare x \gtColon \tau \gtIs e
-    \end{align}
+    \begin{align*}
+        \eqI{\gtDeclare x \gtColon \tau \gtIs e}
+            {\gtDeclare x \gtColon \tau \gtIs \intI{e}}
+            {if $\tau$ is not a collection type.} \\
+        \eqI{\gtDeclare x \gtColon \tau \gtIs e}
+            {\gtDeclare x \gtColon \gtNamed \ConstructComposite{ids} \gtIs \intI{e}}
+            {if $\tau \sim \gtCollection \gtAt \{ids\}$.} \\
+        \eqI{\gtTrigger x \gtColon \tau \gtIs e}
+            {\gtDeclare x \gtColon \tau \gtArrow \gtLP \gtRP \gtIs e}
+            {} \\
+        \eqI{\gtAnnotation A \gtGiven \gtLP t_1 \gtComma \ldots \gtComma t_n \gtRP \gtLB \bar{D} \gtRB}
+            {\gtAnnotation A \gtGiven \gtLP t_1 \gtComma \ldots \gtComma t_n \gtRP \gtLB \intI{\bar{D}} \gtRB}{} \\
+        \eqI{\gtProvides \gtLifted x \gtColon \tau \gtIs e}
+            {\gtProvides \gtLifted x \gtColon \tau \gtIs \intI{e}}{} \\
+        \eqI{\gtRequires \gtLifted x \gtColon \tau}
+            {\gtRequires \gtLifted x \gtColon \tau}{} \\
+        \eqI{\gtProvides x \gtColon \tau \gtIs e}
+            {\gtProvides x \gtColon \tau \gtIs \intI{e}}{} \\
+        \eqI{\gtRequires x \gtColon \tau}
+            {\gtRequires x \gtColon \tau}{} \\
+        \eqI{\gtProvides \gtAnnotation a}
+            {\gtProvides \gtAnnotation a}{} \\
+        \eqI{\gtRequires \gtAnnotation a}
+            {\gtRequires \gtAnnotation a}{}
+    \end{align*}
 
     \subsubsection{Expression Rules}
 
@@ -90,9 +106,16 @@
     \subsection{\texttt{C++} Generation}
 
     Following the imperative transformation, \texttt{C++} code generation takes place through
-    stringification. This is done as follows:
+    stringification. This process references existing environments; $\Delta$ is the set of names
+    currently in scope, along with their types and initial values, $\Gamma$ is the set of
+    encountered combinations of annotations, to generate their corresponding interfaces and
+    implementations, and $\rho$ is the set of encountered record types, for the same purpose.
+
+    \subsubsection{Expression Rules}
 %
     \begin{align*}
+        \eqC{\gtSome e}{x \gtAssign \intC{e} \gtComma \gtAmp x}{} \\
+        \eqC{\gtInd e}{x \gtAssign \intC{e} \gtComma \gtAmp x}{} \\
         \eqC{\gtLP e_1 \gtComma \ldots \gtComma e_n \gtRP}
             {\ccall{make\_tuple}{}{\intC{e_1}, \ldots, \intC{e_n}}}
             {} \\
@@ -114,18 +137,20 @@
         \eqC{\gtBind e_1 \gtAs \gtInd x \gtIn e_2}
             {y \gtAssign \intC{e_1} \gtComma x \gtAssign \gtAmp y \gtComma \intC{e_2}}
             {when $x, y \in \Delta$.} \\
-        \eqC{\gtBind e_1 \gtAs \gtLB x_1 \gtColon z_1 \gtComma \ldots \gtComma x_n \gtColon z_n \gtRB \gtIn e_2}
-            {y \gtAssign \intC{e_1} \gtComma
-                z_1 \gtAssign y \gtDot x_1 \gtComma \ldots \gtComma
-                z_n \gtAssign y \gtDot x_n \gtComma
-                \intC{e_2}}
-            {when $z_1, \ldots z_n \in \Delta$} \\
         \eqC{\gtBind e_1 \gtAs \gtLP x_1, \ldots, x_n \gtRP \gtIn e_2}
             {y \gtAssign \intC{e_1} \gtComma
                 x_1 \gtAssign \ccall{get}{0}{y} \gtComma \ldots \gtComma
                 x_n \gtAssign \ccall{get}{n - 1}{y} \gtComma
                 \intC{e_2}
             }{when $x_1, \ldots, x_n \in \Delta$.} \\
+        \eqC{\gtBind e_1 \gtAs \gtLB x_1 \gtColon z_1 \gtComma \ldots \gtComma x_n \gtColon z_n \gtRB \gtIn e_2}
+            {y \gtAssign \intC{e_1} \gtComma
+                z_1 \gtAssign y \gtDot x_1 \gtComma \ldots \gtComma
+                z_n \gtAssign y \gtDot x_n \gtComma
+                \intC{e_2}}
+            {when $z_1, \ldots z_n \in \Delta$} \\
         \eqC{\gtIf e_1 \gtThen e_2 \gtElse e_3}{\intC{e_1} \gtQt \intC{e_2} \gtColon \intC{e_3}}{} \\
     \end{align*}
+
+    \subsubsection{Declaration Rules}
 \end{document}

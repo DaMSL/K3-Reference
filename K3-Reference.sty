@@ -35,6 +35,8 @@
 \defgt[?]{Qt}
 \defgt[*]{Star}
 \defgt[\&]{Amp}
+\defgt["]{DQuote}
+\defgt[']{SQuote}
 
 % Operators
 \defgt[+]{Plus}
@@ -87,8 +89,14 @@
 \defgt[named]{Named}
 
 % Types
-\defgt[int]{Int}
+\defgt[bool]{Bool}
+\defgt[byte]{Byte}
 \defgt[double]{Double}
+\defgt[int]{Int}
+\defgt[real]{Real}
+\defgt[string]{String}
+
+\defgt[composite]{Composite}
 
 \newcommand{\ccall}[3]{%
     \ensuremath{\texttt{#1}\ifthenelse{\equal{#2}{}}{}{\texttt{<}#2\texttt{>}}\texttt{(}#3\texttt{)}}
