@@ -1,4 +1,9 @@
 \usepackage{ifthen}
+\usepackage{todonotes}
+\setlength{\marginparwidth}{4.1cm}
+
+\definecolor{shyam}{HTML}{F50CAB}
+\newcommand{\sn}[1]{\todo[size=\small,color=shyam!50]{#1}}
 
 % Translation Contexts.
 \newcommand{\intI}[1]{\llbracket\,#1\,\rrbracket_I}
@@ -96,12 +101,19 @@
 \defgt[real]{Real}
 \defgt[string]{String}
 
+\defgt[return]{Return}
+
 \defgt[composite]{Composite}
 
 \newcommand{\ccall}[3]{%
     \ensuremath{\texttt{#1}\ifthenelse{\equal{#2}{}}{}{\texttt{<}#2\texttt{>}}\texttt{(}#3\texttt{)}}
 }
 
+\newcommand{\rw}[1]{\vdash_{#1}}
+\newcommand{\rwI}{\rw{I}}
+\newcommand{\rwD}{\rw{\delta}}
+
 % Function definition macros
 \newcommand{\ConstructComposite}[1]{\textsc{Construct-Composite}(\ensuremath{\mathit{#1}})}
 \newcommand{\ConstructRecord}[1]{\textsc{Construct-Record}(\ensuremath{\mathit{#1}})}
+\newcommand{\Fresh}[1]{\textsc{Fresh($#1$)}}

@@ -1,10 +1,15 @@
 \documentclass{article}
 
-\usepackage{amsmath}
 \usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{mathpartir}
 \usepackage{stmaryrd}
-\usepackage{fullpage}
+\usepackage{todonotes}
+
 \usepackage{K3-Reference}
+
+\hypersetup{colorlinks,linkcolor=orange}
 
 \title{K3: Language Reference}
 \author{}
@@ -16,6 +21,9 @@
     \maketitle
 
     \tableofcontents
+
+    \todototoc
+    \listoftodos
 
     \section{Code Generation}
     \subsection{Imperative Targets}
@@ -106,51 +114,140 @@
     \subsection{\texttt{C++} Generation}
 
     Following the imperative transformation, \texttt{C++} code generation takes place through
-    stringification. This process references existing environments; $\Delta$ is the set of names
-    currently in scope, along with their types and initial values, $\Gamma$ is the set of
-    encountered combinations of annotations, to generate their corresponding interfaces and
-    implementations, and $\rho$ is the set of encountered record types, for the same purpose.
+    stringification.
 
     \subsubsection{Expression Rules}
+
+    When generating \texttt{C++} code for \texttt{K3} expressions, we must address the problem of
+    how to make use of intermediate storage for results. While most expressions can be inlined, some
+    (e.g.~\texttt{if-then-else}) require that their results be stored in an intermediate location
+    while others (e.g.~the left operand of a sequence operator) do not care about their results
+    whatsoever.
+
+    In this scenario, we can define four different ways in which the result of an expression might
+    be handled.
+
+    \begin{description}
+        \item[By Inlining:] The most common method is to inline the result of the sub-expression
+            into its position in the calling context. Most expressions follow this form.
+        \item[By Name:] Some expressions cannot provide their result inline, as the syntactic form
+            of the result might not be known until runtime (e.g.~\texttt{if-then-else}). In this
+            case, the expression must reify its result in a named variable, which it can pass up to
+            its calling context.
+        \item[By Return:] If the result of an expression is the return value of a generated
+            function, its result need not be stored in an intermediate. Instead, the value can be
+            returned directly.
+            \sn{Unless of course the expression requires that the result be stored in an intermediate.
+            (e.g.~$\gtSome$, $\gtInd$), in which case, how does allocation work in the return context?}
+        \item[By Forgetting:] If the result is not used, it need not be stored at all (e.g.~the left
+            operand of a sequence operator).
+    \end{description}
+
+    The last three forms of reification share a similar structure in \texttt{C++}. Each form can be
+    expressed as an effect which reifies the result appropriately. To simplify the treatment of the
+    various reification forms in the code generation rules, we define the reification statement
+    $R_\delta$ as follows:
 %
     \begin{align*}
-        \eqC{\gtSome e}{x \gtAssign \intC{e} \gtComma \gtAmp x}{} \\
-        \eqC{\gtInd e}{x \gtAssign \intC{e} \gtComma \gtAmp x}{} \\
-        \eqC{\gtLP e_1 \gtComma \ldots \gtComma e_n \gtRP}
-            {\ccall{make\_tuple}{}{\intC{e_1}, \ldots, \intC{e_n}}}
-            {} \\
-        \eqC{\gtLB x_1 \gtColon e_1 \gtComma \ldots \gtComma x_n \gtColon e_n \gtRB}
-            {\ConstructRecord{x_1, \ldots x_n} \gtLP \intI{e_1} \gtComma \ldots \gtComma \intI{e_n} \gtRP}{} \\
-        \eqC{e_1 \oplus e_2}{\intC{e_1} \oplus \intC{e_2}}{} \\
-        \eqC{e \gtDot x}{\intC{e} \gtDot x}{} \\
-        \eqC{\gtLet x \gtAssign e_1 \gtIn e_2}
-            {x \gtAssign \intC{e_1} \gtComma \intC{e_2}}
-            {when $x \in \Delta$} \\
-        \eqC{x \gtAssign e}{x \gtAssign \intC{e}}{} \\
-        \eqC{\gtCase e_1 \gtOf \gtLB \gtSome x \gtArrow e_2 \gtRB \gtLB \gtNone \gtArrow e_3 \gtRB}
-            {y \gtAssign \intC{e_1} \gtComma
-                \gtLP y \gtNeq \tk{null} \gtRP \gtQt
-                \gtLP x \gtAssign \gtStar y \gtComma \intC{e_2} \gtRP \gtColon
-                \intC{e_3}
-            }
-            {} \\
-        \eqC{\gtBind e_1 \gtAs \gtInd x \gtIn e_2}
-            {y \gtAssign \intC{e_1} \gtComma x \gtAssign \gtAmp y \gtComma \intC{e_2}}
-            {when $x, y \in \Delta$.} \\
-        \eqC{\gtBind e_1 \gtAs \gtLP x_1, \ldots, x_n \gtRP \gtIn e_2}
-            {y \gtAssign \intC{e_1} \gtComma
-                x_1 \gtAssign \ccall{get}{0}{y} \gtComma \ldots \gtComma
-                x_n \gtAssign \ccall{get}{n - 1}{y} \gtComma
-                \intC{e_2}
-            }{when $x_1, \ldots, x_n \in \Delta$.} \\
-        \eqC{\gtBind e_1 \gtAs \gtLB x_1 \gtColon z_1 \gtComma \ldots \gtComma x_n \gtColon z_n \gtRB \gtIn e_2}
-            {y \gtAssign \intC{e_1} \gtComma
-                z_1 \gtAssign y \gtDot x_1 \gtComma \ldots \gtComma
-                z_n \gtAssign y \gtDot x_n \gtComma
-                \intC{e_2}}
-            {when $z_1, \ldots z_n \in \Delta$} \\
-        \eqC{\gtIf e_1 \gtThen e_2 \gtElse e_3}{\intC{e_1} \gtQt \intC{e_2} \gtColon \intC{e_3}}{} \\
+        R_\delta(v) = \begin{cases}
+            \gtReturn v & \delta = \textsc{Return} \\
+            k \gtIs v & \delta = \textsc{Named$(k)$} \\
+            \phi & \delta = \textsc{Forget}
+        \end{cases}
     \end{align*}
 
-    \subsubsection{Declaration Rules}
+    Additionally, the common case for most expressions is that the rule for reification is derived
+    directly from the rule when inlining. This can be expressed concisely as:
+%
+    \begin{mathpar}
+        \inferrule[Common/$\delta$]{%
+                e \rwI (E, V)
+            }{%
+                e \rwD (E \gtSemi R_\delta(V), \phi)
+            }
+    \end{mathpar}
+
+    For the purposes of generating code, we define the family of derivation relations $\rwD$, where
+    $\delta \in \{\textsc{Inline}, \textsc{Named$(k)$}, \textsc{Return}, \textsc{Forget}\}$. For
+    most expressions, the rules for $\delta \neq \textsc{Inline}$ can be defined in terms of the
+    rule for \textsc{Inline} and $R_{\delta}$. Therefore it is generally sufficient to explicitly
+    describe the rules for $\delta = \textsc{Inline}$. Those rules, along with the special cases for
+    $\delta \neq \textsc{Inline}$, are presented below:
+%
+    \begin{mathpar}
+        \inferrule[Constant/Inline]{%
+                \\
+            }{%
+                c \rwI (\phi, c)
+            }
+
+        \inferrule[Variable/Inline]{%
+                \\
+            }{%
+                v \rwI (\phi, v)
+            }
+
+        \inferrule[Some/Inline]{%
+                e \rwI (e_E, e_V) \\
+                \Fresh{x}
+            }{%
+                \gtSome e \rwI (e_E \gtSemi x \gtAssign e_V, \gtAmp x)
+            }
+
+        \inferrule[Unary/Inline]{%
+                e \rwI (e_E, e_V)
+            }{%
+                \oplus e \rwI (e_E, \oplus e_V)
+            }
+
+        \inferrule[Binary/Inline]{%
+                a \rwI (a_E, a_V) \\
+                b \rwI (b_E, b_V)
+            }{%
+                a \oplus b \rwI (a_E \gtSemi b_E, a_V \oplus b_V)
+            }
+
+        \inferrule[Tuple/Inline]{%
+                e_1 \rwI (e_{1,E}, e_{1,V}) \\
+                e_2 \rwI (e_{2,E}, e_{2,V}) \\
+                \cdots \\
+                e_n \rwI (e_{n,E}, e_{n,V})
+            }{%
+                \gtLP e_1 \gtComma e_2 \gtComma \ldots \gtComma e_n \gtRP \rwI
+                    (e_{1,E} \gtSemi e_{2,E} \gtSemi \ldots \gtSemi e_{n,E},
+                    \gtLP e_{1,V} \gtComma e_{2,V} \gtComma \ldots \gtComma e_{n,V} \gtRP)
+            }
+
+        \inferrule[Record/Inline]{%
+                e_1 \rwI (e_{1,E}, e_{1,V}) \\
+                e_2 \rwI (e_{2,E}, e_{2,V}) \\
+                \cdots \\
+                e_n \rwI (e_{n,E}, e_{n,V})
+            }{%
+                \gtLB x_1 \gtColon e_1 \gtComma x_2 \gtColon e_2 \gtComma \ldots \gtComma x_n \gtColon e_n \gtRB
+                    \rwI (e_{1,E} \gtSemi e_{2,E} \gtSemi \ldots \gtSemi e_{n,E},
+                        \gtLB x_1 \gtColon e_{1,V} \gtComma
+                              x_2 \gtColon e_{2,V} \gtComma \ldots \gtComma
+                              x_n \gtColon e_{n,V}
+                        \gtRB)
+            }
+
+        \inferrule[If-Then-Else/Inline]{%
+                \Fresh{k} \\
+                \gtIf p \gtThen t \gtElse e \rw{N(k)}
+                    (E, \phi)
+            }{%
+                \gtIf p \gtThen t \gtElse e \rwI
+                    (E, k)
+            }
+
+        \inferrule[If-Then-Else/$\delta$]{%
+                p \rwI (p_E, p_V) \\
+                t \rwD (t_E, \phi) \\
+                e \rwD (e_E, \phi)
+            }{%
+                \gtIf p \gtThen t \gtElse e \rwD
+                    (p_E \gtSemi \gtIf \gtLP p_V \gtRP \gtLB t_E \gtRB \gtLB e_E \gtRB, \phi)
+            }
+    \end{mathpar}
 \end{document}
