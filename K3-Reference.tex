@@ -157,23 +157,29 @@
         \end{cases}
     \end{align*}
 
-    Additionally, the common case for most expressions is that the rule for reification is derived
-    directly from the rule when inlining. This can be expressed concisely as:
+    For the purposes of generating code, we define the family of derivation relations $\rwD$, where
+    $\delta \in \{\textsc{Inline}, \textsc{Named$(k)$}, \textsc{Return}, \textsc{Forget}\}$. Some
+    expressions lend themselves naturally to the inline form, and for such rules the reified form
+    can be derived mechanically. Alternately, other expressions lend themselves naturally to the
+    reified form, where the reverse is possible. These two canonical rules are as follows:
 %
     \begin{mathpar}
-        \inferrule[Common/$\delta$]{%
+        \inferrule[Canonical/$\delta$]{%
                 e \rwI (E, V)
             }{%
                 e \rwD (E \gtSemi R_\delta(V), \phi)
             }
+
+        \inferrule[Canonical/Inline]{%
+                \Fresh{k} \\
+                e \rw{N(k)} (E, \phi)
+            }{%
+                e \rwI (E, k)
+            }
     \end{mathpar}
 
-    For the purposes of generating code, we define the family of derivation relations $\rwD$, where
-    $\delta \in \{\textsc{Inline}, \textsc{Named$(k)$}, \textsc{Return}, \textsc{Forget}\}$. For
-    most expressions, the rules for $\delta \neq \textsc{Inline}$ can be defined in terms of the
-    rule for \textsc{Inline} and $R_{\delta}$. Therefore it is generally sufficient to explicitly
-    describe the rules for $\delta = \textsc{Inline}$. Those rules, along with the special cases for
-    $\delta \neq \textsc{Inline}$, are presented below:
+    Therefore it is generally only necessary to specify one of the rules (\textsc{Inline} or
+    otherwise) for each expression. These rules are as follows:
 %
     \begin{mathpar}
         \inferrule[Constant/Inline]{%
@@ -247,15 +253,6 @@
             }
 
 
-        \inferrule[Let-In/Inline]{%
-                a \rwI (a_E, a_V) \\
-                b \rwI (b_E, b_V) \\
-                \Fresh{c}
-            }{%
-                \gtLet x \gtAssign a \gtIn b \rwI
-                    (a_E \gtSemi \gtLB x \gtAssign a_V \gtSemi b_E \gtSemi c \gtAssign b_V \gtRB, c)
-            }
-
         \inferrule[Let-In/$\delta$]{%
                 a \rwI (a_E, a_V) \\
                 b \rwD (b_E, \phi)
@@ -270,13 +267,6 @@
                 x \gtAssign e \rwI (a_E, x \gtAssign a_V, \gtNull)
             }
 
-        \inferrule[Case-Of/Inline]{%
-                \Fresh{k} \\
-                \gtCase e \gtOf \gtLB \gtSome x \gtArrow a \gtRB \gtLB \gtNone \gtArrow b \gtRB \rw{N(k)} (E, \phi)
-            }{%
-                \gtCase e \gtOf \gtLB \gtSome x \gtArrow a \gtRB \gtLB \gtNone \gtArrow b \gtRB \rwI (E, k)
-            }
-
         \inferrule[Case-Of/$\delta$]{%
                 e \rwI (e_E, e_V) \\
                 a \rwD (a_E, \phi) \\
@@ -288,13 +278,40 @@
                         \gtLB b_E \gtRB, \phi)
             }
 
-        \inferrule[If-Then-Else/Inline]{%
-                \Fresh{k} \\
-                \gtIf p \gtThen t \gtElse e \rw{N(k)}
-                    (E, \phi)
+        % TODO: Specify that x_1 ... x_n must use the reference form of get, and must be references
+        % themselves.
+        \inferrule[Bind-Indirection/$\delta$]{%
+                e \rwI (e_E, e_V) \\
+                b \rwD (b_E, \phi)
             }{%
-                \gtIf p \gtThen t \gtElse e \rwI
-                    (E, k)
+                \gtBind e \gtAs \gtInd x \gtIn b \rwD
+                    (e_E \gtSemi \gtLB x \gtAssign \gtStar e_V \gtSemi b_E \gtRB, \phi)
+            }
+
+        \inferrule[Bind-Tuple/$\delta$]{%
+                e \rwI (e_E, e_V) \\
+                b \rwD (b_E, \phi)
+            }{%
+                \gtBind e \gtAs \gtLP x_1 \gtComma \ldots \gtComma x_n \gtRP \gtIn b \rwD
+                    (e_E \gtSemi \gtLB
+                        x_1 \gtAssign \ccall{get}{0}{e_V} \gtSemi
+                        \ldots \gtSemi
+                        x_n \gtAssign \ccall{get}{n - 1}{e_V} \gtSemi
+                        b_E
+                    \gtRB, \phi)
+            }
+
+        \inferrule[Bind-Record/$\delta$]{%
+                e \rwI (e_E, e_V) \\
+                b \rwD (b_E, \phi)
+            }{%
+                \gtBind e \gtAs \gtLB x_1 \gtColon y_1 \gtComma \ldots \gtComma x_n \gtColon y_n \gtRB \gtIn b
+                    \rwD (e_E \gtSemi \gtLB
+                        y_1 \gtAssign e_V.x_1 \gtSemi
+                        \ldots \gtSemi
+                        y_n \gtAssign e_V.x_n \gtSemi
+                        b_E
+                    \gtRB, \phi)
             }
 
         \inferrule[If-Then-Else/$\delta$]{%
