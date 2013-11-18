@@ -195,17 +195,11 @@
                 \gtSome e \rwI (e_E \gtSemi x \gtAssign e_V, \gtAmp x)
             }
 
-        \inferrule[Unary/Inline]{%
-                e \rwI (e_E, e_V)
+        \inferrule[Indirection/Inline]{%
+                e \rwI (e_E, e_V) \\
+                \Fresh{x}
             }{%
-                \oplus e \rwI (e_E, \oplus e_V)
-            }
-
-        \inferrule[Binary/Inline]{%
-                a \rwI (a_E, a_V) \\
-                b \rwI (b_E, b_V)
-            }{%
-                a \oplus b \rwI (a_E \gtSemi b_E, a_V \oplus b_V)
+                \gtInd e \rwI (e_E \gtSemi x \gtAssign e_V, \gtAmp x)
             }
 
         \inferrule[Tuple/Inline]{%
@@ -231,6 +225,67 @@
                               x_2 \gtColon e_{2,V} \gtComma \ldots \gtComma
                               x_n \gtColon e_{n,V}
                         \gtRB)
+            }
+
+        \inferrule[Unary/Inline]{%
+                e \rwI (e_E, e_V)
+            }{%
+                \oplus e \rwI (e_E, \oplus e_V)
+            }
+
+        \inferrule[Binary/Inline]{%
+                a \rwI (a_E, a_V) \\
+                b \rwI (b_E, b_V)
+            }{%
+                a \oplus b \rwI (a_E \gtSemi b_E, a_V \oplus b_V)
+            }
+
+        \inferrule[Project/Inline]{%
+                e \rwI (e_E, e_V)
+            }{%
+                e.x \rwI (e_E, e_V.x)
+            }
+
+
+        \inferrule[Let-In/Inline]{%
+                a \rwI (a_E, a_V) \\
+                b \rwI (b_E, b_V) \\
+                \Fresh{c}
+            }{%
+                \gtLet x \gtAssign a \gtIn b \rwI
+                    (a_E \gtSemi \gtLB x \gtAssign a_V \gtSemi b_E \gtSemi c \gtAssign b_V \gtRB, c)
+            }
+
+        \inferrule[Let-In/$\delta$]{%
+                a \rwI (a_E, a_V) \\
+                b \rwD (b_E, \phi)
+            }{%
+                \gtLet x \gtAssign a \gtIn b \rwD
+                    (a_E \gtSemi \gtLB x \gtAssign a_V \gtSemi b_E \gtRB, \phi)
+            }
+
+        \inferrule[Assign/Inline]{%
+                e \rwI (a_E, a_V)
+            }{%
+                x \gtAssign e \rwI (a_E, x \gtAssign a_V, \gtNull)
+            }
+
+        \inferrule[Case-Of/Inline]{%
+                \Fresh{k} \\
+                \gtCase e \gtOf \gtLB \gtSome x \gtArrow a \gtRB \gtLB \gtNone \gtArrow b \gtRB \rw{N(k)} (E, \phi)
+            }{%
+                \gtCase e \gtOf \gtLB \gtSome x \gtArrow a \gtRB \gtLB \gtNone \gtArrow b \gtRB \rwD (E, k)
+            }
+
+        \inferrule[Case-Of/$\delta$]{%
+                e \rwI (e_E, e_V) \\
+                a \rwD (a_E, \phi) \\
+                b \rwD (b_E, \phi)
+            }{%
+                \gtCase e \gtOf \gtLB \gtSome x \gtArrow a \gtRB \gtLB \gtNone \gtArrow b \gtRB \rwI
+                    (e_E \gtSemi \gtIf \gtLP e_V \gtNeq \gtNull \gtRP
+                        \gtLB x \gtAssign \gtStar e_V \gtSemi a_E \gtRB \gtElse
+                        \gtLB b_E \gtRB, \phi)
             }
 
         \inferrule[If-Then-Else/Inline]{%
