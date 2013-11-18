@@ -1,9 +1,10 @@
 \usepackage{ifthen}
 \usepackage{todonotes}
+
 \setlength{\marginparwidth}{4.1cm}
 
 \definecolor{shyam}{HTML}{F50CAB}
-\newcommand{\sn}[1]{\todo[size=\small,color=shyam!50]{#1}}
+\newcommand{\sn}[2]{\todo[caption=#1,size=\small,color=shyam!50]{#2}}
 
 % Translation Contexts.
 \newcommand{\intI}[1]{\llbracket\,#1\,\rrbracket_I}

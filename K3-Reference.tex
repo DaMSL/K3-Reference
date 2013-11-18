@@ -137,8 +137,9 @@
         \item[By Return:] If the result of an expression is the return value of a generated
             function, its result need not be stored in an intermediate. Instead, the value can be
             returned directly.
-            \sn{Unless of course the expression requires that the result be stored in an intermediate.
-            (e.g.~$\gtSome$, $\gtInd$), in which case, how does allocation work in the return context?}
+            \sn{Return Reification}{Unless of course the expression requires that the result be
+                stored in an intermediate.  (e.g.~$\gtSome$, $\gtInd$), in which case, how does
+                allocation work in the return context?}
         \item[By Forgetting:] If the result is not used, it need not be stored at all (e.g.~the left
             operand of a sequence operator).
     \end{description}
