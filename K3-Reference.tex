@@ -274,7 +274,7 @@
                 \Fresh{k} \\
                 \gtCase e \gtOf \gtLB \gtSome x \gtArrow a \gtRB \gtLB \gtNone \gtArrow b \gtRB \rw{N(k)} (E, \phi)
             }{%
-                \gtCase e \gtOf \gtLB \gtSome x \gtArrow a \gtRB \gtLB \gtNone \gtArrow b \gtRB \rwD (E, k)
+                \gtCase e \gtOf \gtLB \gtSome x \gtArrow a \gtRB \gtLB \gtNone \gtArrow b \gtRB \rwI (E, k)
             }
 
         \inferrule[Case-Of/$\delta$]{%
@@ -282,7 +282,7 @@
                 a \rwD (a_E, \phi) \\
                 b \rwD (b_E, \phi)
             }{%
-                \gtCase e \gtOf \gtLB \gtSome x \gtArrow a \gtRB \gtLB \gtNone \gtArrow b \gtRB \rwI
+                \gtCase e \gtOf \gtLB \gtSome x \gtArrow a \gtRB \gtLB \gtNone \gtArrow b \gtRB \rwD
                     (e_E \gtSemi \gtIf \gtLP e_V \gtNeq \gtNull \gtRP
                         \gtLB x \gtAssign \gtStar e_V \gtSemi a_E \gtRB \gtElse
                         \gtLB b_E \gtRB, \phi)
