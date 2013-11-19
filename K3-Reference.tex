@@ -262,9 +262,9 @@
             }
 
         \inferrule[Assign/Inline]{%
-                e \rwI (a_E, a_V)
+                e \rw{N(x)} (e_E, \phi)
             }{%
-                x \gtAssign e \rwI (a_E, x \gtAssign a_V, \gtNull)
+                x \gtAssign e \rwI (e_E, \gtNull)
             }
 
         \inferrule[Case-Of/$\delta$]{%
