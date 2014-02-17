@@ -10,13 +10,13 @@
 
 \usepackage{K3-Reference}
 
-\hypersetup{colorlinks,linkcolor=orange}
+\hypersetup{colorlinks,linkcolor=magenta}
 
 \title{K3: Language Reference}
 \author{}
 \date{}
 
-\newcommand{\K}{\texttt{K3}}
+\newcommand{\K}{\ensuremath{\texttt{K3}}}
 
 \begin{document}
     \maketitle
@@ -34,19 +34,12 @@
     translation into an imperative language. The second stage consists of the actual translation to
     the backing language.
 
-    \subsubsection{Grammar Constructs}
-
-    The rewrite rules for the first stage are as follows:
-
     \subsubsection{Declaration Rules}
 
+    The declaration rules for the imperative transformation perform the following tasks:
+
     \begin{itemize}
-        \item Triggers rewrite to functions of the corresponding argument types.
-        \item Global variable declarations rewrite to declarations of the same type, with the caveat
-            that collection declarations are rewritten to be of a type specific to the combination
-            of annotations they are declared with.
-        \item Annotation declarations rewrite to global declaration of composites, which consist of
-            the relevant lifted attributes and methods.
+        \item Rewrite triggers into functions of the corresponding type.
     \end{itemize}
 %
     \begin{adjustwidth}{-0.5in}{-0.5in}\begin{align*}
@@ -77,18 +70,10 @@
 
     \subsubsection{Expression Rules}
 
+    The expression rules for the imperative transformation perform the following tasks:
+
     \begin{itemize}
-        \item Value constructors (constants of any type, \texttt{Some}/\texttt{None}, indirections,
-            literal tuples and records, \texttt{empty}) should be reified with a generated name.
-        \item Binary operators except function application can remain as-is.
-        \item Function declaration/application has two forms:
-            \begin{itemize}
-                \item If the function is anonymous (and is therefore immediately applied), it should
-                    be rewritten as a \texttt{let-in}.
-                \item If the function is declared globally (and is therefore potentially applied
-                    multiple times), it should be translated into a native function, with
-                    corresponding invocations translated as native function calls.
-            \end{itemize}
+        \item Inline anonymous function applications.
     \end{itemize}
 %
     \begin{adjustwidth}{-0.5in}{-0.5in}\begin{align*}
@@ -117,9 +102,9 @@
     Following the imperative transformation, \texttt{C++} code generation takes place through
     stringification.
 
-    \subsubsection{Expression Rules}
+    \subsubsection{The Reification Problem}
 
-    When generating \texttt{C++} code for \texttt{K3} expressions, we must address the problem of
+    When generating \texttt{C++} code for \K expressions, we must address the problem of
     how to make use of intermediate storage for results. While most expressions can be inlined, some
     (e.g.~\texttt{if-then-else}) require that their results be stored in an intermediate location
     while others (e.g.~the left operand of a sequence operator) do not care about their results
@@ -134,7 +119,8 @@
         \item[By Name:] Some expressions cannot provide their result inline, as the syntactic form
             of the result might not be known until runtime (e.g.~\texttt{if-then-else}). In this
             case, the expression must reify its result in a named variable, which it can pass up to
-            its calling context.
+            its calling context. The name of this variable can either be passed in from the calling
+            context, or generated in-situ.
         \item[By Return:] If the result of an expression is the return value of a generated
             function, its result need not be stored in an intermediate. Instead, the value can be
             returned directly.
@@ -158,170 +144,75 @@
         \end{cases}
     \end{align*}
 
+    \subsubsection{Expression Rules}
+
     For the purposes of generating code, we define the family of derivation relations $\rwD$, where
     $\delta \in \{\textsc{Inline}, \textsc{Named$(k)$}, \textsc{Return}, \textsc{Forget}\}$. Some
     expressions lend themselves naturally to the inline form, and for such rules the reified form
     can be derived mechanically. Alternately, other expressions lend themselves naturally to the
     reified form, where the reverse is possible. These two canonical rules are as follows:
 %
-    \begin{mathpar}
-        \inferrule[Canonical/$\delta$]{%
-                e \rwI (E, V)
-            }{%
-                e \rwD (E \gtSemi R_\delta(V), \phi)
-            }
-
-        \inferrule[Canonical/Inline]{%
-                \Fresh{k} \\
-                e \rw{N(k)} (E, \phi)
-            }{%
-                e \rwI (E, k)
-            }
-    \end{mathpar}
+    \begin{align*}
+        \intCD{e} &= \intEI{e} \gtSemi R_\delta(\intVI{e}) \with \phi \\
+        \intCI{e} &= \Fresh{k} \gtSemi \intE{N(k)}{e} \with k \\
+    \end{align*}
 
     Therefore it is generally only necessary to specify one of the rules (\textsc{Inline} or
     otherwise) for each expression. These rules are as follows:
-%
-    \begin{mathpar}
-        \inferrule[Constant/Inline]{%
-                \\
-            }{%
-                c \rwI (\phi, c)
-            }
 
-        \inferrule[Variable/Inline]{%
-                \\
-            }{%
-                v \rwI (\phi, v)
-            }
+    \begin{adjustwidth}{-0.5in}{-0.5in}\begin{align*}
+        \intC{*}{e} &= \intE{*}{e} \with \intV{*}{e} \\
+        \intCI{c} &= \phi \with c \\
+        \intCI{v} &= \phi \with v \\
+        \intCI{\gtSome e} &= \intEI{e} \with \ccall{shared\_ptr}{\tau_e}{\gtNew \tau_e\gtLP\intVI{e}\gtRP} \\
+        \intCI{\gtInd e} &= \intEI{e} \with \ccall{shared\_ptr}{\tau_e}{\gtNew \tau_e\gtLP\intVI{e}\gtRP} \\
+        \intCI{\gtLP e_1 \gtComma \ldots e_n \gtRP}
+            &= \intEI{e_1} \gtSemi \ldots \gtSemi \intEI{e_n}
+            \with \gtLP \intVI{e_1} \gtComma \ldots \gtComma \intVI{e_n} \gtRP \\
+        \intCI{\gtLB x_1 \gtColon e_1 \gtComma \ldots x_n \gtColon e_n \gtRB}
+            &= \intEI{e_1} \gtSemi \ldots \gtSemi \intEI{e_n}
+            \with \gtLB x_1 \gtColon \intVI{e_1} \gtComma \ldots \gtComma x_n \gtColon \intVI{e_n} \gtRP \\
+        \intCI{e_1 \gtSemi e_2} &= \intE{F}{e_1} \gtSemi \intEI{e_2} \with \intVI{e_2} \\
+        \intCI{\oplus e} &= \intEI{e} \with \oplus \intVI{e} \\
+        \intCI{e_1 \oplus e_2} &= \intEI{e_1} \gtSemi \intEI{e_2} \with \intVI{e_1} \oplus \intVI{e_2} \\
+        \intCI{x \gtAssign e}
+            &= \intE{N(x)}{e} \with \gtNull \\
+        % \intCD{\gtLet x \gtAssign a \gtIn b}
+            % &= \intEI{a} \gtSemi \gtLB x \gtAssign \intVI{a} \gtSemi \intED{b} \gtRB \\
+        \intCD{\gtLet x \gtAssign a \gtIn b}
+            &= \gtLB \intE{N(x)}{a} \gtSemi \intED{b} \gtRB \\
+        \intCD{\gtCase e \gtOf \gtLB \gtSome x \gtArrow a \gtRB \gtLB \gtNone \gtArrow b \gtRB}
+            &= \intEI{e} \gtSemi \gtIf \gtLP \intVI{e} \gtNeq \gtNull \gtRP
+                \gtLB x \gtAssign \gtStar \intVI{e} \gtSemi \intED{a} \gtRB \gtElse
+                \gtLB \intED{b} \gtRB \\
+        \intCD{\gtBind e \gtAs \gtInd x \gtIn b}
+            &= \intEI{e} \gtSemi \gtLB x \gtAssign \gtStar \intVI{e} \gtSemi \intED{b} \gtRB \\
+        \intCD{\gtBind e \gtAs \gtLP x_1 \gtComma \ldots \gtComma x_n \gtRP \gtIn b}
+            &= \intEI{e} \gtSemi \gtLB
+                x_1 \gtAssign \ccall{get}{0}{\intVI{e}} \gtSemi
+                \ldots \gtSemi
+                x_n \gtAssign \ccall{get}{\texttt{$n$-$1$}}{\intVI{e}} \gtSemi
+                \intED{b} \gtRB \\
+        \intCD{\gtBind e \gtAs \gtLB x_1 \gtColon y_1 \gtComma \ldots \gtComma x_n \gtColon y_n \gtRB \gtIn b}
+            &= \intEI{e} \gtSemi \gtLB
+                y_1 \gtAssign \intVI{e}.x_1 \gtSemi
+                \ldots \gtSemi
+                y_n \gtAssign \intVI{e}.x_n \gtSemi
+                \intED{b} \gtRB \\
+        \intCD{\gtIf p \gtThen t \gtElse e}
+            &= \intEI{p} \gtSemi \gtIf \gtLP \intVI{p} \gtRP
+                \gtLB \intED{t} \gtRB \gtElse
+                \gtLB \intED{e} \gtRB
+    \end{align*}\end{adjustwidth}
 
-        \inferrule[Some/Inline]{%
-                e \rwI (e_E, e_V) \\
-                \Fresh{x}
-            }{%
-                \gtSome e \rwI (e_E \gtSemi x \gtAssign e_V, \gtAmp x)
-            }
+    \subsubsection{Declaration Rules}
 
-        \inferrule[Indirection/Inline]{%
-                e \rwI (e_E, e_V) \\
-                \Fresh{x}
-            }{%
-                \gtInd e \rwI (e_E \gtSemi x \gtAssign e_V, \gtAmp x)
-            }
-
-        \inferrule[Tuple/Inline]{%
-                e_1 \rwI (e_{1,E}, e_{1,V}) \\
-                e_2 \rwI (e_{2,E}, e_{2,V}) \\
-                \cdots \\
-                e_n \rwI (e_{n,E}, e_{n,V})
-            }{%
-                \gtLP e_1 \gtComma e_2 \gtComma \ldots \gtComma e_n \gtRP \rwI
-                    (e_{1,E} \gtSemi e_{2,E} \gtSemi \ldots \gtSemi e_{n,E},
-                    \gtLP e_{1,V} \gtComma e_{2,V} \gtComma \ldots \gtComma e_{n,V} \gtRP)
-            }
-
-        \inferrule[Record/Inline]{%
-                e_1 \rwI (e_{1,E}, e_{1,V}) \\
-                e_2 \rwI (e_{2,E}, e_{2,V}) \\
-                \cdots \\
-                e_n \rwI (e_{n,E}, e_{n,V})
-            }{%
-                \gtLB x_1 \gtColon e_1 \gtComma x_2 \gtColon e_2 \gtComma \ldots \gtComma x_n \gtColon e_n \gtRB
-                    \rwI (e_{1,E} \gtSemi e_{2,E} \gtSemi \ldots \gtSemi e_{n,E},
-                        \gtLB x_1 \gtColon e_{1,V} \gtComma
-                              x_2 \gtColon e_{2,V} \gtComma \ldots \gtComma
-                              x_n \gtColon e_{n,V}
-                        \gtRB)
-            }
-
-        \inferrule[Unary/Inline]{%
-                e \rwI (e_E, e_V)
-            }{%
-                \oplus e \rwI (e_E, \oplus e_V)
-            }
-
-        \inferrule[Binary/Inline]{%
-                a \rwI (a_E, a_V) \\
-                b \rwI (b_E, b_V)
-            }{%
-                a \oplus b \rwI (a_E \gtSemi b_E, a_V \oplus b_V)
-            }
-
-        \inferrule[Project/Inline]{%
-                e \rwI (e_E, e_V)
-            }{%
-                e.x \rwI (e_E, e_V.x)
-            }
-
-
-        \inferrule[Let-In/$\delta$]{%
-                a \rwI (a_E, a_V) \\
-                b \rwD (b_E, \phi)
-            }{%
-                \gtLet x \gtAssign a \gtIn b \rwD
-                    (a_E \gtSemi \gtLB x \gtAssign a_V \gtSemi b_E \gtRB, \phi)
-            }
-
-        \inferrule[Assign/Inline]{%
-                e \rw{N(x)} (e_E, \phi)
-            }{%
-                x \gtAssign e \rwI (e_E, \gtNull)
-            }
-
-        \inferrule[Case-Of/$\delta$]{%
-                e \rwI (e_E, e_V) \\
-                a \rwD (a_E, \phi) \\
-                b \rwD (b_E, \phi)
-            }{%
-                \gtCase e \gtOf \gtLB \gtSome x \gtArrow a \gtRB \gtLB \gtNone \gtArrow b \gtRB \rwD
-                    (e_E \gtSemi \gtIf \gtLP e_V \gtNeq \gtNull \gtRP
-                        \gtLB x \gtAssign \gtStar e_V \gtSemi a_E \gtRB \gtElse
-                        \gtLB b_E \gtRB, \phi)
-            }
-
-        % TODO: Specify that x_1 ... x_n must use the reference form of get, and must be references
-        % themselves.
-        \inferrule[Bind-Indirection/$\delta$]{%
-                e \rwI (e_E, e_V) \\
-                b \rwD (b_E, \phi)
-            }{%
-                \gtBind e \gtAs \gtInd x \gtIn b \rwD
-                    (e_E \gtSemi \gtLB x \gtAssign \gtStar e_V \gtSemi b_E \gtRB, \phi)
-            }
-
-        \inferrule[Bind-Tuple/$\delta$]{%
-                e \rwI (e_E, e_V) \\
-                b \rwD (b_E, \phi)
-            }{%
-                \gtBind e \gtAs \gtLP x_1 \gtComma \ldots \gtComma x_n \gtRP \gtIn b \rwD
-                    (e_E \gtSemi \gtLB
-                        x_1 \gtAssign \ccall{get}{0}{e_V} \gtSemi
-                        \ldots \gtSemi
-                        x_n \gtAssign \ccall{get}{n - 1}{e_V} \gtSemi
-                        b_E
-                    \gtRB, \phi)
-            }
-
-        \inferrule[Bind-Record/$\delta$]{%
-                e \rwI (e_E, e_V) \\
-                b \rwD (b_E, \phi)
-            }{%
-                \gtBind e \gtAs \gtLB x_1 \gtColon y_1 \gtComma \ldots \gtComma x_n \gtColon y_n \gtRB \gtIn b
-                    \rwD (e_E \gtSemi \gtLB
-                        y_1 \gtAssign e_V.x_1 \gtSemi
-                        \ldots \gtSemi
-                        y_n \gtAssign e_V.x_n \gtSemi
-                        b_E
-                    \gtRB, \phi)
-            }
-
-        \inferrule[If-Then-Else/$\delta$]{%
-                p \rwI (p_E, p_V) \\
-                t \rwD (t_E, \phi) \\
-                e \rwD (e_E, \phi)
-            }{%
-                \gtIf p \gtThen t \gtElse e \rwD
-                    (p_E \gtSemi \gtIf \gtLP p_V \gtRP \gtLB t_E \gtRB \gtLB e_E \gtRB, \phi)
-            }
-    \end{mathpar}
+    \begin{align*}
+        \intC{*}{\gtDeclare x \gtColon \tau \gtAssign e}
+            &= \Decl{\tau}{x}{} \gtSemi
+            \\& \text{if $\tau$ is not a function type.} \\
+        \intC{*}{\gtDeclare x \gtColon \tau_1 \gtArrow \tau_2 = e}
+            &= \Omega(\tau_2) x \gtLP \Omega(\tau_1) \gtRP \gtLB \intE{R}{e} \gtRB
+            \\& \text{otherwise.}
+    \end{align*}
 \end{document}
