@@ -8,10 +8,21 @@
 
 % Translation Contexts.
 \newcommand{\intI}[1]{\llbracket\,#1\,\rrbracket_I}
-\newcommand{\intC}[1]{\llbracket\,#1\,\rrbracket_C}
+
+\newcommand{\intC}[2]{\llbracket\,#2\,\rrbracket_{C}^{#1}}
+\newcommand{\intE}[2]{\llbracket\,#2\,\rrbracket_{E}^{#1}}
+\newcommand{\intV}[2]{\llbracket\,#2\,\rrbracket_{V}^{#1}}
+
+\newcommand{\intCI}[1]{\llbracket\,#1\,\rrbracket_{C}^{I}}
+\newcommand{\intEI}[1]{\llbracket\,#1\,\rrbracket_{E}^{I}}
+\newcommand{\intVI}[1]{\llbracket\,#1\,\rrbracket_{V}^{I}}
+\newcommand{\intCD}[1]{\llbracket\,#1\,\rrbracket_{C}^{\delta}}
+\newcommand{\intED}[1]{\llbracket\,#1\,\rrbracket_{E}^{\delta}}
 
 \newcommand{\eqI}[3]{\intI{#1} &\longrightarrow #2 \ifthenelse{\equal{#3}{}}{}{\\\notag& \text{#3}}}
 \newcommand{\eqC}[3]{\intC{#1} &\longrightarrow #2 \ifthenelse{\equal{#3}{}}{}{\\\notag& \text{#3}}}
+
+\newcommand{\with}{\Big/}
 
 % General-purpose token macro.
 \newcommand{\tk}[1]{\ensuremath{\mathinner{\texttt{#1}}}}
@@ -107,6 +118,8 @@
 
 \defgt[composite]{Composite}
 
+\defgt[new]{New}
+
 \newcommand{\ccall}[3]{%
     \ensuremath{\texttt{#1}\ifthenelse{\equal{#2}{}}{}{\texttt{<}#2\texttt{>}}\texttt{(}#3\texttt{)}}
 }
@@ -119,3 +132,4 @@
 \newcommand{\ConstructComposite}[1]{\textsc{Construct-Composite}(\ensuremath{\mathit{#1}})}
 \newcommand{\ConstructRecord}[1]{\textsc{Construct-Record}(\ensuremath{\mathit{#1}})}
 \newcommand{\Fresh}[1]{\textsc{Fresh($#1$)}}
+\newcommand{\Decl}[3]{\Omega_{#1} \; #2 \ifthenelse{\equal{#3}{}}{}{\gtAssign #3}}
