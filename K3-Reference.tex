@@ -2,6 +2,7 @@
 
 \usepackage{amsfonts}
 \usepackage{amsmath}
+\usepackage{chngpage}
 \usepackage{hyperref}
 \usepackage{mathpartir}
 \usepackage{stmaryrd}
@@ -48,7 +49,7 @@
             the relevant lifted attributes and methods.
     \end{itemize}
 %
-    \begin{align*}
+    \begin{adjustwidth}{-0.5in}{-0.5in}\begin{align*}
         \eqI{\gtDeclare x \gtColon \tau \gtIs e}
             {\gtDeclare x \gtColon \tau \gtIs \intI{e}}
             {if $\tau$ is not a collection type.} \\
@@ -72,7 +73,7 @@
             {\gtProvides \gtAnnotation a}{} \\
         \eqI{\gtRequires \gtAnnotation a}
             {\gtRequires \gtAnnotation a}{}
-    \end{align*}
+    \end{align*}\end{adjustwidth}
 
     \subsubsection{Expression Rules}
 
@@ -90,7 +91,7 @@
             \end{itemize}
     \end{itemize}
 %
-    \begin{align*}
+    \begin{adjustwidth}{-0.5in}{-0.5in}\begin{align*}
         \eqI{e_1 \oplus e_2}{\intI{e_1} \oplus \intI{e_2}}{where $\oplus \neq \epsilon$ or $e_1$ is a variable.} \\
         \eqI{\gtLP \lambda x \gtArrow e_1 \gtRP e_2}{\gtLet x \gtAssign \gtImmut \intI{e_2} \gtIn \intI{e_1}}{} \\
         \eqI{\gtSome e}{\gtSome \intI{e}}{} \\
@@ -109,7 +110,7 @@
             {} \\
         \eqI{\gtBind e_1 \gtAs b \gtIn e_2}{\gtBind \intI{e_1} \gtAs b \gtIn \intI{e_2}}{} \\
         \eqI{e}{e}{otherwise.}
-    \end{align*}
+    \end{align*}\end{adjustwidth}
 
     \subsection{\texttt{C++} Generation}
 
