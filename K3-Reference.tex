@@ -1,5 +1,5 @@
-\documentclass{article}
-
+\documentclass[10pt]{article}
+\usepackage[top=1in, bottom=1in, left=1in, right=1in]{geometry}
 \usepackage{amsfonts}
 \usepackage{amsmath}
 \usepackage{chngpage}
@@ -12,207 +12,278 @@
 
 \hypersetup{colorlinks,linkcolor=magenta}
 
-\title{K3: Language Reference}
+\title{K3: System and Language Design Reference}
 \author{}
 \date{}
 
 \newcommand{\K}{\ensuremath{\texttt{K3}}}
 
 \begin{document}
-    \maketitle
+\maketitle
 
-    \tableofcontents
+\tableofcontents
 
-    \todototoc
-    \listoftodos
+\todototoc
+\listoftodos
 
-    \section{Code Generation}
-    \subsection{Imperative Targets}
+\section{Introduction}
+  \subsection{Target applications}
+  \subsection{Related work}
 
-    Code generation to imperative target languages is done in two stages. The first is a pure $\K
-    \rightarrow \K$ transformation which produces an imperative embedding, more amenable to
-    translation into an imperative language. The second stage consists of the actual translation to
-    the backing language.
+\section{System overview}
+  \subsection{Framework Architecture}
 
-    \subsubsection{Declaration Rules}
+\section{Computation model}
+  \subsection{Triggers and message passing}
+  \subsection{Scheduling}
+  \subsection{Language grammar}
+  \subsection{Operational semantics}
 
-    The declaration rules for the imperative transformation perform the following tasks:
+\section{Data model}
+  \subsection{Nested collections}
+  \subsection{Indirections}
+  \subsection{Literals}
+  \subsection{Mutability}
+  \subsection{Memory model}
 
-    \begin{itemize}
-        \item Rewrite triggers into functions of the corresponding type.
-    \end{itemize}
+\section{Extensibility model}
+  \subsection{Data annotations}
+  \subsection{Control annotations}
+  \subsection{Properties}
+
+\section{Program transformations and Optimization}
+  \subsection{Program normalization}
+    \subsubsection{Effect lifting}
+
+  \subsection{Standard optimizations}
+    \subsubsection{Constant folding}
+    \subsubsection{Dead code elimination}
+    \subsubsection{Common subexpression elimination}
+
+  \subsection{Fusion}
+
+    ?? We want to avoid excessive effort to get our optimizations to industrial strength
+      -- Define explicit optimizations supported, and those elided
+      -- We focus on high-level optimizations in our framework, e.g., fusion/deforestation
+
+  \subsection{Annotation inference}
+    \subsubsection{Data structure selection}
+    \subsubsection{Execution strategy selection}
+
+  \subsection{Co-design and iterative inference}
+    \subsubsection{Workload partitioning}
+
+\section{Code Generation and Execution}
+\subsection{Interpretation}
+
+\subsection{Imperative Targets}
+
+Code generation to imperative target languages is done in two stages. The first is a pure $\K
+\rightarrow \K$ transformation which produces an imperative embedding, more amenable to
+translation into an imperative language. The second stage consists of the actual translation to
+the backing language.
+
+\subsubsection{Declaration Rules}
+
+The declaration rules for the imperative transformation perform the following tasks:
+
+\begin{itemize}
+    \item Rewrite triggers into functions of the corresponding type.
+\end{itemize}
 %
-    \begin{adjustwidth}{-0.5in}{-0.5in}\begin{align*}
-        \eqI{\gtDeclare x \gtColon \tau \gtIs e}
-            {\gtDeclare x \gtColon \tau \gtIs \intI{e}}
-            {if $\tau$ is not a collection type.} \\
-        \eqI{\gtDeclare x \gtColon \tau \gtIs e}
-            {\gtDeclare x \gtColon \gtNamed \ConstructComposite{ids} \gtIs \intI{e}}
-            {if $\tau \sim \gtCollection \gtAt \{ids\}$.} \\
-        \eqI{\gtTrigger x \gtColon \tau \gtIs e}
-            {\gtDeclare x \gtColon \tau \gtArrow \gtLP \gtRP \gtIs e}
-            {} \\
-        \eqI{\gtAnnotation A \gtGiven \gtLP t_1 \gtComma \ldots \gtComma t_n \gtRP \gtLB \bar{D} \gtRB}
-            {\gtAnnotation A \gtGiven \gtLP t_1 \gtComma \ldots \gtComma t_n \gtRP \gtLB \intI{\bar{D}} \gtRB}{} \\
-        \eqI{\gtProvides \gtLifted x \gtColon \tau \gtIs e}
-            {\gtProvides \gtLifted x \gtColon \tau \gtIs \intI{e}}{} \\
-        \eqI{\gtRequires \gtLifted x \gtColon \tau}
-            {\gtRequires \gtLifted x \gtColon \tau}{} \\
-        \eqI{\gtProvides x \gtColon \tau \gtIs e}
-            {\gtProvides x \gtColon \tau \gtIs \intI{e}}{} \\
-        \eqI{\gtRequires x \gtColon \tau}
-            {\gtRequires x \gtColon \tau}{} \\
-        \eqI{\gtProvides \gtAnnotation a}
-            {\gtProvides \gtAnnotation a}{} \\
-        \eqI{\gtRequires \gtAnnotation a}
-            {\gtRequires \gtAnnotation a}{}
-    \end{align*}\end{adjustwidth}
+\begin{adjustwidth}{-0.5in}{-0.5in}\begin{align*}
+    \eqI{\gtDeclare x \gtColon \tau \gtIs e}
+        {\gtDeclare x \gtColon \tau \gtIs \intI{e}}
+        {if $\tau$ is not a collection type.} \\
+    \eqI{\gtDeclare x \gtColon \tau \gtIs e}
+        {\gtDeclare x \gtColon \gtNamed \ConstructComposite{ids} \gtIs \intI{e}}
+        {if $\tau \sim \gtCollection \gtAt \{ids\}$.} \\
+    \eqI{\gtTrigger x \gtColon \tau \gtIs e}
+        {\gtDeclare x \gtColon \tau \gtArrow \gtLP \gtRP \gtIs e}
+        {} \\
+    \eqI{\gtAnnotation A \gtGiven \gtLP t_1 \gtComma \ldots \gtComma t_n \gtRP \gtLB \bar{D} \gtRB}
+        {\gtAnnotation A \gtGiven \gtLP t_1 \gtComma \ldots \gtComma t_n \gtRP \gtLB \intI{\bar{D}} \gtRB}{} \\
+    \eqI{\gtProvides \gtLifted x \gtColon \tau \gtIs e}
+        {\gtProvides \gtLifted x \gtColon \tau \gtIs \intI{e}}{} \\
+    \eqI{\gtRequires \gtLifted x \gtColon \tau}
+        {\gtRequires \gtLifted x \gtColon \tau}{} \\
+    \eqI{\gtProvides x \gtColon \tau \gtIs e}
+        {\gtProvides x \gtColon \tau \gtIs \intI{e}}{} \\
+    \eqI{\gtRequires x \gtColon \tau}
+        {\gtRequires x \gtColon \tau}{} \\
+    \eqI{\gtProvides \gtAnnotation a}
+        {\gtProvides \gtAnnotation a}{} \\
+    \eqI{\gtRequires \gtAnnotation a}
+        {\gtRequires \gtAnnotation a}{}
+\end{align*}\end{adjustwidth}
 
-    \subsubsection{Expression Rules}
+\subsubsection{Expression Rules}
 
-    The expression rules for the imperative transformation perform the following tasks:
+The expression rules for the imperative transformation perform the following tasks:
 
-    \begin{itemize}
-        \item Inline anonymous function applications.
-    \end{itemize}
+\begin{itemize}
+    \item Inline anonymous function applications.
+\end{itemize}
 %
-    \begin{adjustwidth}{-0.5in}{-0.5in}\begin{align*}
-        \eqI{e_1 \oplus e_2}{\intI{e_1} \oplus \intI{e_2}}{where $\oplus \neq \epsilon$ or $e_1$ is a variable.} \\
-        \eqI{\gtLP \lambda x \gtArrow e_1 \gtRP e_2}{\gtLet x \gtAssign \gtImmut \intI{e_2} \gtIn \intI{e_1}}{} \\
-        \eqI{\gtSome e}{\gtSome \intI{e}}{} \\
-        \eqI{\gtInd e}{\gtInd \intI{e}}{} \\
-        \eqI{\gtLP e_1, e_2, \ldots, e_n \gtRP}{\gtLP \intI{e_1}, \intI{e_2}, \ldots, \intI{e_n} \gtRP}{} \\
-        \eqI{\gtLP x_1 \gtColon e_1, x_2 \gtColon e_2, \ldots, x_n \gtColon e_n \gtRP}
-            {\gtLP x_1 \gtColon \intI{e_1}, x_2 \gtColon \intI{e_2}, \ldots, x_n \gtColon \intI{e_n} \gtRP}{} \\
-        \eqI{\gtIf e_1 \gtThen e_2 \gtElse e_3}{\gtIf \intI{e_1} \gtThen \intI{e_2} \gtElse \intI{e_3}}{} \\
-        \eqI{e.x}{\intI{e}.x}{} \\
-        \eqI{\gtLet x \gtAssign e_1 \gtIn e_2}{\gtLet x \gtAssign \intI{e_1} \gtIn \intI{e_2}}{} \\
-        \eqI{x \gtAssign e}{x \gtAssign \intI{e}}{} \\
-        \eqI{\gtCase e_1 \gtOf \gtLB \gtSome x \gtArrow e_2 \gtRB
-                \gtLB \gtNone \gtArrow e_3 \gtRB}
-            {\gtCase \intI{e_1} \gtOf \gtLB \gtSome x \gtArrow \intI{e_2} \gtRB
-                \gtLB \gtNone \gtArrow \intI{e_3} \gtRB}
-            {} \\
-        \eqI{\gtBind e_1 \gtAs b \gtIn e_2}{\gtBind \intI{e_1} \gtAs b \gtIn \intI{e_2}}{} \\
-        \eqI{e}{e}{otherwise.}
-    \end{align*}\end{adjustwidth}
+\begin{adjustwidth}{-0.5in}{-0.5in}\begin{align*}
+    \eqI{e_1 \oplus e_2}{\intI{e_1} \oplus \intI{e_2}}{where $\oplus \neq \epsilon$ or $e_1$ is a variable.} \\
+    \eqI{\gtLP \lambda x \gtArrow e_1 \gtRP e_2}{\gtLet x \gtAssign \gtImmut \intI{e_2} \gtIn \intI{e_1}}{} \\
+    \eqI{\gtSome e}{\gtSome \intI{e}}{} \\
+    \eqI{\gtInd e}{\gtInd \intI{e}}{} \\
+    \eqI{\gtLP e_1, e_2, \ldots, e_n \gtRP}{\gtLP \intI{e_1}, \intI{e_2}, \ldots, \intI{e_n} \gtRP}{} \\
+    \eqI{\gtLP x_1 \gtColon e_1, x_2 \gtColon e_2, \ldots, x_n \gtColon e_n \gtRP}
+        {\gtLP x_1 \gtColon \intI{e_1}, x_2 \gtColon \intI{e_2}, \ldots, x_n \gtColon \intI{e_n} \gtRP}{} \\
+    \eqI{\gtIf e_1 \gtThen e_2 \gtElse e_3}{\gtIf \intI{e_1} \gtThen \intI{e_2} \gtElse \intI{e_3}}{} \\
+    \eqI{e.x}{\intI{e}.x}{} \\
+    \eqI{\gtLet x \gtAssign e_1 \gtIn e_2}{\gtLet x \gtAssign \intI{e_1} \gtIn \intI{e_2}}{} \\
+    \eqI{x \gtAssign e}{x \gtAssign \intI{e}}{} \\
+    \eqI{\gtCase e_1 \gtOf \gtLB \gtSome x \gtArrow e_2 \gtRB
+            \gtLB \gtNone \gtArrow e_3 \gtRB}
+        {\gtCase \intI{e_1} \gtOf \gtLB \gtSome x \gtArrow \intI{e_2} \gtRB
+            \gtLB \gtNone \gtArrow \intI{e_3} \gtRB}
+        {} \\
+    \eqI{\gtBind e_1 \gtAs b \gtIn e_2}{\gtBind \intI{e_1} \gtAs b \gtIn \intI{e_2}}{} \\
+    \eqI{e}{e}{otherwise.}
+\end{align*}\end{adjustwidth}
 
-    \subsection{\texttt{C++} Generation}
+\subsection{\texttt{C++} Generation}
 
-    Following the imperative transformation, \texttt{C++} code generation takes place through
-    stringification.
+Following the imperative transformation, \texttt{C++} code generation takes place through
+stringification.
 
-    \subsubsection{The Reification Problem}
+\subsubsection{The Reification Problem}
 
-    When generating \texttt{C++} code for \K expressions, we must address the problem of
-    how to make use of intermediate storage for results. While most expressions can be inlined, some
-    (e.g.~\texttt{if-then-else}) require that their results be stored in an intermediate location
-    while others (e.g.~the left operand of a sequence operator) do not care about their results
-    whatsoever.
+When generating \texttt{C++} code for \K expressions, we must address the problem of
+how to make use of intermediate storage for results. While most expressions can be inlined, some
+(e.g.~\texttt{if-then-else}) require that their results be stored in an intermediate location
+while others (e.g.~the left operand of a sequence operator) do not care about their results
+whatsoever.
 
-    In this scenario, we can define four different ways in which the result of an expression might
-    be handled.
+In this scenario, we can define four different ways in which the result of an expression might
+be handled.
 
-    \begin{description}
-        \item[By Inlining:] The most common method is to inline the result of the sub-expression
-            into its position in the calling context. Most expressions follow this form.
-        \item[By Name:] Some expressions cannot provide their result inline, as the syntactic form
-            of the result might not be known until runtime (e.g.~\texttt{if-then-else}). In this
-            case, the expression must reify its result in a named variable, which it can pass up to
-            its calling context. The name of this variable can either be passed in from the calling
-            context, or generated in-situ.
-        \item[By Return:] If the result of an expression is the return value of a generated
-            function, its result need not be stored in an intermediate. Instead, the value can be
-            returned directly.
-            \sn{Return Reification}{Unless of course the expression requires that the result be
-                stored in an intermediate.  (e.g.~$\gtSome$, $\gtInd$), in which case, how does
-                allocation work in the return context?}
-        \item[By Forgetting:] If the result is not used, it need not be stored at all (e.g.~the left
-            operand of a sequence operator).
-    \end{description}
+\begin{description}
+    \item[By Inlining:] The most common method is to inline the result of the sub-expression
+        into its position in the calling context. Most expressions follow this form.
+    \item[By Name:] Some expressions cannot provide their result inline, as the syntactic form
+        of the result might not be known until runtime (e.g.~\texttt{if-then-else}). In this
+        case, the expression must reify its result in a named variable, which it can pass up to
+        its calling context. The name of this variable can either be passed in from the calling
+        context, or generated in-situ.
+    \item[By Return:] If the result of an expression is the return value of a generated
+        function, its result need not be stored in an intermediate. Instead, the value can be
+        returned directly.
+        \sn{Return Reification}{Unless of course the expression requires that the result be
+            stored in an intermediate.  (e.g.~$\gtSome$, $\gtInd$), in which case, how does
+            allocation work in the return context?}
+    \item[By Forgetting:] If the result is not used, it need not be stored at all (e.g.~the left
+        operand of a sequence operator).
+\end{description}
 
-    The last three forms of reification share a similar structure in \texttt{C++}. Each form can be
-    expressed as an effect which reifies the result appropriately. To simplify the treatment of the
-    various reification forms in the code generation rules, we define the reification statement
-    $R_\delta$ as follows:
+The last three forms of reification share a similar structure in \texttt{C++}. Each form can be
+expressed as an effect which reifies the result appropriately. To simplify the treatment of the
+various reification forms in the code generation rules, we define the reification statement
+$R_\delta$ as follows:
 %
-    \begin{align*}
-        R_\delta(v) = \begin{cases}
-            \gtReturn v & \delta = \textsc{Return} \\
-            k \gtIs v & \delta = \textsc{Named$(k)$} \\
-            \phi & \delta = \textsc{Forget}
-        \end{cases}
-    \end{align*}
+\begin{align*}
+    R_\delta(v) = \begin{cases}
+        \gtReturn v & \delta = \textsc{Return} \\
+        k \gtIs v & \delta = \textsc{Named$(k)$} \\
+        \phi & \delta = \textsc{Forget}
+    \end{cases}
+\end{align*}
 
-    \subsubsection{Expression Rules}
+\subsubsection{Expression Rules}
 
-    For the purposes of generating code, we define the family of derivation relations $\rwD$, where
-    $\delta \in \{\textsc{Inline}, \textsc{Named$(k)$}, \textsc{Return}, \textsc{Forget}\}$. Some
-    expressions lend themselves naturally to the inline form, and for such rules the reified form
-    can be derived mechanically. Alternately, other expressions lend themselves naturally to the
-    reified form, where the reverse is possible. These two canonical rules are as follows:
+For the purposes of generating code, we define the family of derivation relations $\rwD$, where
+$\delta \in \{\textsc{Inline}, \textsc{Named$(k)$}, \textsc{Return}, \textsc{Forget}\}$. Some
+expressions lend themselves naturally to the inline form, and for such rules the reified form
+can be derived mechanically. Alternately, other expressions lend themselves naturally to the
+reified form, where the reverse is possible. These two canonical rules are as follows:
 %
-    \begin{align*}
-        \intCD{e} &= \intEI{e} \gtSemi R_\delta(\intVI{e}) \with \phi \\
-        \intCI{e} &= \Fresh{k} \gtSemi \intE{N(k)}{e} \with k \\
-    \end{align*}
+\begin{align*}
+    \intCD{e} &= \intEI{e} \gtSemi R_\delta(\intVI{e}) \with \phi \\
+    \intCI{e} &= \Fresh{k} \gtSemi \intE{N(k)}{e} \with k \\
+\end{align*}
 
-    Therefore it is generally only necessary to specify one of the rules (\textsc{Inline} or
-    otherwise) for each expression. These rules are as follows:
+Therefore it is generally only necessary to specify one of the rules (\textsc{Inline} or
+otherwise) for each expression. These rules are as follows:
 
-    \begin{adjustwidth}{-0.5in}{-0.5in}\begin{align*}
-        \intC{*}{e} &= \intE{*}{e} \with \intV{*}{e} \\
-        \intCI{c} &= \phi \with c \\
-        \intCI{v} &= \phi \with v \\
-        \intCI{\gtSome e} &= \intEI{e} \with \ccall{shared\_ptr}{\tau_e}{\gtNew \tau_e\gtLP\intVI{e}\gtRP} \\
-        \intCI{\gtInd e} &= \intEI{e} \with \ccall{shared\_ptr}{\tau_e}{\gtNew \tau_e\gtLP\intVI{e}\gtRP} \\
-        \intCI{\gtLP e_1 \gtComma \ldots e_n \gtRP}
-            &= \intEI{e_1} \gtSemi \ldots \gtSemi \intEI{e_n}
-            \with \gtLP \intVI{e_1} \gtComma \ldots \gtComma \intVI{e_n} \gtRP \\
-        \intCI{\gtLB x_1 \gtColon e_1 \gtComma \ldots x_n \gtColon e_n \gtRB}
-            &= \intEI{e_1} \gtSemi \ldots \gtSemi \intEI{e_n}
-            \with \gtLB x_1 \gtColon \intVI{e_1} \gtComma \ldots \gtComma x_n \gtColon \intVI{e_n} \gtRP \\
-        \intCI{e_1 \gtSemi e_2} &= \intE{F}{e_1} \gtSemi \intEI{e_2} \with \intVI{e_2} \\
-        \intCI{\oplus e} &= \intEI{e} \with \oplus \intVI{e} \\
-        \intCI{e_1 \oplus e_2} &= \intEI{e_1} \gtSemi \intEI{e_2} \with \intVI{e_1} \oplus \intVI{e_2} \\
-        \intCI{x \gtAssign e}
-            &= \intE{N(x)}{e} \with \gtNull \\
-        % \intCD{\gtLet x \gtAssign a \gtIn b}
-            % &= \intEI{a} \gtSemi \gtLB x \gtAssign \intVI{a} \gtSemi \intED{b} \gtRB \\
-        \intCD{\gtLet x \gtAssign a \gtIn b}
-            &= \gtLB \intE{N(x)}{a} \gtSemi \intED{b} \gtRB \\
-        \intCD{\gtCase e \gtOf \gtLB \gtSome x \gtArrow a \gtRB \gtLB \gtNone \gtArrow b \gtRB}
-            &= \intEI{e} \gtSemi \gtIf \gtLP \intVI{e} \gtNeq \gtNull \gtRP
-                \gtLB x \gtAssign \gtStar \intVI{e} \gtSemi \intED{a} \gtRB \gtElse
-                \gtLB \intED{b} \gtRB \\
-        \intCD{\gtBind e \gtAs \gtInd x \gtIn b}
-            &= \intEI{e} \gtSemi \gtLB x \gtAssign \gtStar \intVI{e} \gtSemi \intED{b} \gtRB \\
-        \intCD{\gtBind e \gtAs \gtLP x_1 \gtComma \ldots \gtComma x_n \gtRP \gtIn b}
-            &= \intEI{e} \gtSemi \gtLB
-                x_1 \gtAssign \ccall{get}{0}{\intVI{e}} \gtSemi
-                \ldots \gtSemi
-                x_n \gtAssign \ccall{get}{\texttt{$n$-$1$}}{\intVI{e}} \gtSemi
-                \intED{b} \gtRB \\
-        \intCD{\gtBind e \gtAs \gtLB x_1 \gtColon y_1 \gtComma \ldots \gtComma x_n \gtColon y_n \gtRB \gtIn b}
-            &= \intEI{e} \gtSemi \gtLB
-                y_1 \gtAssign \intVI{e}.x_1 \gtSemi
-                \ldots \gtSemi
-                y_n \gtAssign \intVI{e}.x_n \gtSemi
-                \intED{b} \gtRB \\
-        \intCD{\gtIf p \gtThen t \gtElse e}
-            &= \intEI{p} \gtSemi \gtIf \gtLP \intVI{p} \gtRP
-                \gtLB \intED{t} \gtRB \gtElse
-                \gtLB \intED{e} \gtRB
-    \end{align*}\end{adjustwidth}
+\begin{adjustwidth}{-0.5in}{-0.5in}\begin{align*}
+    \intC{*}{e} &= \intE{*}{e} \with \intV{*}{e} \\
+    \intCI{c} &= \phi \with c \\
+    \intCI{v} &= \phi \with v \\
+    \intCI{\gtSome e} &= \intEI{e} \with \ccall{shared\_ptr}{\tau_e}{\gtNew \tau_e\gtLP\intVI{e}\gtRP} \\
+    \intCI{\gtInd e} &= \intEI{e} \with \ccall{shared\_ptr}{\tau_e}{\gtNew \tau_e\gtLP\intVI{e}\gtRP} \\
+    \intCI{\gtLP e_1 \gtComma \ldots e_n \gtRP}
+        &= \intEI{e_1} \gtSemi \ldots \gtSemi \intEI{e_n}
+        \with \gtLP \intVI{e_1} \gtComma \ldots \gtComma \intVI{e_n} \gtRP \\
+    \intCI{\gtLB x_1 \gtColon e_1 \gtComma \ldots x_n \gtColon e_n \gtRB}
+        &= \intEI{e_1} \gtSemi \ldots \gtSemi \intEI{e_n}
+        \with \gtLB x_1 \gtColon \intVI{e_1} \gtComma \ldots \gtComma x_n \gtColon \intVI{e_n} \gtRP \\
+    \intCI{e_1 \gtSemi e_2} &= \intE{F}{e_1} \gtSemi \intEI{e_2} \with \intVI{e_2} \\
+    \intCI{\oplus e} &= \intEI{e} \with \oplus \intVI{e} \\
+    \intCI{e_1 \oplus e_2} &= \intEI{e_1} \gtSemi \intEI{e_2} \with \intVI{e_1} \oplus \intVI{e_2} \\
+    \intCI{x \gtAssign e}
+        &= \intE{N(x)}{e} \with \gtNull \\
+    % \intCD{\gtLet x \gtAssign a \gtIn b}
+        % &= \intEI{a} \gtSemi \gtLB x \gtAssign \intVI{a} \gtSemi \intED{b} \gtRB \\
+    \intCD{\gtLet x \gtAssign a \gtIn b}
+        &= \gtLB \intE{N(x)}{a} \gtSemi \intED{b} \gtRB \\
+    \intCD{\gtCase e \gtOf \gtLB \gtSome x \gtArrow a \gtRB \gtLB \gtNone \gtArrow b \gtRB}
+        &= \intEI{e} \gtSemi \gtIf \gtLP \intVI{e} \gtNeq \gtNull \gtRP
+            \gtLB x \gtAssign \gtStar \intVI{e} \gtSemi \intED{a} \gtRB \gtElse
+            \gtLB \intED{b} \gtRB \\
+    \intCD{\gtBind e \gtAs \gtInd x \gtIn b}
+        &= \intEI{e} \gtSemi \gtLB x \gtAssign \gtStar \intVI{e} \gtSemi \intED{b} \gtRB \\
+    \intCD{\gtBind e \gtAs \gtLP x_1 \gtComma \ldots \gtComma x_n \gtRP \gtIn b}
+        &= \intEI{e} \gtSemi \gtLB
+            x_1 \gtAssign \ccall{get}{0}{\intVI{e}} \gtSemi
+            \ldots \gtSemi
+            x_n \gtAssign \ccall{get}{\texttt{$n$-$1$}}{\intVI{e}} \gtSemi
+            \intED{b} \gtRB \\
+    \intCD{\gtBind e \gtAs \gtLB x_1 \gtColon y_1 \gtComma \ldots \gtComma x_n \gtColon y_n \gtRB \gtIn b}
+        &= \intEI{e} \gtSemi \gtLB
+            y_1 \gtAssign \intVI{e}.x_1 \gtSemi
+            \ldots \gtSemi
+            y_n \gtAssign \intVI{e}.x_n \gtSemi
+            \intED{b} \gtRB \\
+    \intCD{\gtIf p \gtThen t \gtElse e}
+        &= \intEI{p} \gtSemi \gtIf \gtLP \intVI{p} \gtRP
+            \gtLB \intED{t} \gtRB \gtElse
+            \gtLB \intED{e} \gtRB
+\end{align*}\end{adjustwidth}
 
-    \subsubsection{Declaration Rules}
+\subsubsection{Declaration Rules}
 
-    \begin{align*}
-        \intC{*}{\gtDeclare x \gtColon \tau \gtAssign e}
-            &= \Decl{\tau}{x}{} \gtSemi
-            \\& \text{if $\tau$ is not a function type.} \\
-        \intC{*}{\gtDeclare x \gtColon \tau_1 \gtArrow \tau_2 = e}
-            &= \Omega(\tau_2) x \gtLP \Omega(\tau_1) \gtRP \gtLB \intE{R}{e} \gtRB
-            \\& \text{otherwise.}
-    \end{align*}
+\begin{align*}
+    \intC{*}{\gtDeclare x \gtColon \tau \gtAssign e}
+        &= \Decl{\tau}{x}{} \gtSemi
+        \\& \text{if $\tau$ is not a function type.} \\
+    \intC{*}{\gtDeclare x \gtColon \tau_1 \gtArrow \tau_2 = e}
+        &= \Omega(\tau_2) x \gtLP \Omega(\tau_1) \gtRP \gtLB \intE{R}{e} \gtRB
+        \\& \text{otherwise.}
+\end{align*}
+
+\subsection{Haskell}
+  Effect embedding
+
+\section{Adaptive execution}
+  \subsection{Adaptive engine design:}
+      -- need a common IR data representation accessible by all adaptive backends
+        ?? can we synthesize this from a K3 representation using a standard code generator
+        ?? that is, we metacompile our IR data as a tree with tagged variants
+      -- code generation embeds initial K3 IR
+      -- each adaptive backend provides its own:
+        ++ JIT compiler from the IR to native code
+        ++ compiled library loading facilities
+        ++ adaptation algorithms on the IR
+
+  \subsection{Adaptation algorithm design}
+
+\section{Deployment}
+  \subsection{Bootstrap}
+  \subsection{Docker}
+
+
 \end{document}
