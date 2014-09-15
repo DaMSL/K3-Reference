@@ -12,6 +12,8 @@
 
 \hypersetup{colorlinks,linkcolor=magenta}
 
+\newcommand{\tinysection}[1]{\noindent{\bf #1.}}
+
 \title{K3: System and Language Design Reference}
 \author{}
 \date{}
@@ -51,6 +53,9 @@
   \subsection{Control annotations}
   \subsection{Properties}
 
+\section{Type System}
+\tinysection{Zach's document contents.}
+
 \section{Program transformations and Optimization}
   \subsection{Program normalization}
     \subsubsection{Effect lifting}
@@ -61,10 +66,13 @@
     \subsubsection{Common subexpression elimination}
 
   \subsection{Fusion}
-
-    ?? We want to avoid excessive effort to get our optimizations to industrial strength
-      -- Define explicit optimizations supported, and those elided
-      -- We focus on high-level optimizations in our framework, e.g., fusion/deforestation
+    \begin{itemize}
+      \item We want to avoid excessive effort to get our optimizations to industrial strength
+        \begin{itemize}
+        \item Define explicit optimizations supported, and those elided
+        \item We focus on high-level optimizations in our framework, e.g., fusion/deforestation
+        \end{itemize}
+    \end{itemize}
 
   \subsection{Annotation inference}
     \subsubsection{Data structure selection}
@@ -266,24 +274,35 @@ otherwise) for each expression. These rules are as follows:
 \end{align*}
 
 \subsection{Haskell}
-  Effect embedding
+\tinysection{Effect embedding}
 
 \section{Adaptive execution}
   \subsection{Adaptive engine design:}
-      -- need a common IR data representation accessible by all adaptive backends
-        ?? can we synthesize this from a K3 representation using a standard code generator
-        ?? that is, we metacompile our IR data as a tree with tagged variants
-      -- code generation embeds initial K3 IR
-      -- each adaptive backend provides its own:
-        ++ JIT compiler from the IR to native code
-        ++ compiled library loading facilities
-        ++ adaptation algorithms on the IR
+    \begin{itemize}
+      \item need a common IR data representation accessible by all adaptive backends
+        \begin{itemize}
+          \item can we synthesize this from a K3 representation using a standard code generator?
+          \item that is, we metacompile our IR data as a tree with tagged variants?
+        \end{itemize}
+      \item code generation embeds initial K3 IR
+      \item each adaptive backend provides its own:
+        \begin{itemize}
+          \item JIT compiler from the IR to native code
+          \item compiled library loading facilities
+          \item adaptation algorithms on the IR
+        \end{itemize}
+    \end{itemize}
 
   \subsection{Adaptation algorithm design}
 
 \section{Deployment}
   \subsection{Bootstrap}
   \subsection{Docker}
+  \subsection{Mesos}
 
+\section{Benchmarks}
+  \subsection{SQL Queries}
+  \subsection{Machine Learning Algorithms}
+  \subsection{Indexing Data Structures}
 
 \end{document}
